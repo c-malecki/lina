@@ -1,0 +1,7 @@
+info.md
+examples
+build/*
+!build/data
+build/data/*
+!build/logs
+build/logs/*
