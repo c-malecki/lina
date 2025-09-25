@@ -10,6 +10,7 @@ import (
 
 	"github.com/c-malecki/lina/internal/action"
 	"github.com/c-malecki/lina/internal/dbw"
+	"github.com/c-malecki/lina/internal/util"
 	_ "modernc.org/sqlite"
 )
 
@@ -20,29 +21,46 @@ func main() {
 		log.Fatal(err)
 	}
 
-	token, err := action.GetOrSetConfig(ctx, DBW)
+	state := &util.State{}
+
+	err = action.GetOrCreateUser(ctx, DBW, state)
 	if err != nil {
 		log.Fatal(err)
 	}
-	println(token)
 
 	for {
-		err := action.ShowStats(ctx, DBW)
+		err := action.ShowStats(ctx, DBW, state)
 		if err != nil {
 			log.Fatal(err)
 		}
-		action.ShowMenu()
+
+		action.ShowOptions()
 
 		reader := bufio.NewReader(os.Stdin)
-		choice, _ := reader.ReadString('\n')
-		choice = strings.TrimSpace(choice)
+		opt, _ := reader.ReadString('\n')
+		opt = strings.TrimSpace(opt)
 
-		switch choice {
+		switch opt {
 		case "1":
-			fmt.Println("Updating connections...")
+			if state.User.ApifyToken == nil {
+				err = action.UpdateApifyToken(ctx, DBW, state)
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+			urls, err := action.ParseLinkedinCsv()
+			if err != nil {
+				log.Fatal(err)
+			}
+			err = action.ProceedWithEnrichment(ctx, DBW, state, urls)
+			if err != nil {
+				log.Fatal(err)
+			}
 		case "2":
 			fmt.Println("Search is currently disabled")
 		case "3":
+
+		case "4":
 			return
 		default:
 			fmt.Println("Invalid option")

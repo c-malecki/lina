@@ -1,9 +1,3 @@
--- name: CreateConfigTable :exec
-CREATE TABLE IF NOT EXISTS config (
-  id INTEGER PRIMARY KEY,
-  "secret" TEXT
-);
-
 -- name: CreateDatasetDegreesTable :exec
 CREATE TABLE IF NOT EXISTS dataset_degrees (
   id INTEGER PRIMARY KEY,
@@ -42,6 +36,14 @@ CREATE TABLE IF NOT EXISTS dataset_specialies (
 CREATE TABLE IF NOT EXISTS dataset_study_fields (
   id INTEGER PRIMARY KEY,
   "name" TEXT NOT NULL UNIQUE
+);
+
+-- name: CreateUsersTable :exec
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY,
+  username TEXT NOT NULL,
+  "password" TEXT NOT NULL,
+  apify_token TEXT
 );
 
 -- name: CreateOrganizationsTable :exec
@@ -106,6 +108,25 @@ CREATE TABLE IF NOT EXISTS persons (
   current_company_id INTEGER,
   FOREIGN KEY (location_id) REFERENCES dataset_locations(id) ON DELETE SET NULL,
   FOREIGN KEY (current_company_id) REFERENCES organizations(id) ON DELETE SET NULL
+);
+
+-- name: CreateNetworksTable :exec
+CREATE TABLE IF NOT EXISTS networks (
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER NOT NULL,
+  "name" TEXT NOT NULL,
+  UNIQUE (user_id, "name"),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- name: CreateNetworkConnectionsTable :exec
+CREATE TABLE IF NOT EXISTS network_connections (
+  id INTEGER PRIMARY KEY,
+  network_id INTEGER NOT NULL,
+  person_id INTEGER NOT NULL,
+  UNIQUE (network_id, person_id),
+  FOREIGN KEY (network_id) REFERENCES networks(id) ON DELETE CASCADE,
+  FOREIGN KEY (person_id) REFERENCES persons(id) ON DELETE CASCADE
 );
 
 -- name: CreateExperiencesTable :exec

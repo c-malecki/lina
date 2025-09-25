@@ -5,9 +5,10 @@ import (
 	"fmt"
 
 	"github.com/c-malecki/lina/internal/dbw"
+	"github.com/c-malecki/lina/internal/util"
 )
 
-func ShowStats(ctx context.Context, DBW *dbw.DBW) error {
+func ShowStats(ctx context.Context, DBW *dbw.DBW, state *util.State) error {
 	pct, err := DBW.SQLC.CountPersons(ctx)
 	if err != nil {
 		return err
@@ -21,7 +22,8 @@ func ShowStats(ctx context.Context, DBW *dbw.DBW) error {
 		return err
 	}
 
-	fmt.Printf("People Records: %d\n", pct)
+	fmt.Printf("\n%s:\n", state.Network.Name)
+	fmt.Printf("\nPeople Records: %d\n", pct)
 	fmt.Printf("Company Records: %d\n", cct)
 	fmt.Printf("School Records: %d\n", sct)
 

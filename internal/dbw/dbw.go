@@ -48,9 +48,9 @@ func InitDB(ctx context.Context) (*DBW, error) {
 	}
 	qtx := dbw.SQLC.WithTx(tx)
 
-	err = qtx.CreateConfigTable(ctx)
+	err = qtx.CreateUsersTable(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("qtx.CreateConfigTable %w", err)
+		return nil, fmt.Errorf("qtx.CreateUsersTable %w", err)
 	}
 	err = qtx.CreateDatasetDegreesTable(ctx)
 	if err != nil {
@@ -108,6 +108,14 @@ func InitDB(ctx context.Context) (*DBW, error) {
 	if err != nil {
 		return nil, fmt.Errorf("tx.Exec CREATE persons indexes %w", err)
 	}
+	err = qtx.CreateNetworksTable(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("qtx.CreateNetworksTable %w", err)
+	}
+	err = qtx.CreateNetworkConnectionsTable(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("qtx.CreateNetworkConnectionsTable %w", err)
+	}
 	err = qtx.CreateExperiencesTable(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("qtx.CreateExperiencesTable %w", err)
@@ -131,19 +139,6 @@ func InitDB(ctx context.Context) (*DBW, error) {
 	`)
 	if err != nil {
 		return nil, fmt.Errorf("tx.Exec CREATE educations indexes %w", err)
-	}
-
-	cfg, err := qtx.SelectConfig(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("qtx.SelectConfig %w", err)
-	}
-	if len(cfg) == 0 {
-		_, err = tx.Exec(`
-		INSERT INTO config (id) VALUES (1);
-	`)
-		if err != nil {
-			return nil, fmt.Errorf("tx.Exec init config %w", err)
-		}
 	}
 
 	err = tx.Commit()

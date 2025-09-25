@@ -4,11 +4,6 @@
 
 package model
 
-type Config struct {
-	ID     int64   `db:"id"`
-	Secret *string `db:"secret"`
-}
-
 type DatasetDegrees struct {
 	ID   int64  `db:"id"`
 	Name string `db:"name"`
@@ -70,6 +65,18 @@ type Experiences struct {
 	SkillsUrl      *string `db:"skills_url"`
 }
 
+type NetworkConnections struct {
+	ID        int64 `db:"id"`
+	NetworkID int64 `db:"network_id"`
+	PersonID  int64 `db:"person_id"`
+}
+
+type Networks struct {
+	ID     int64  `db:"id"`
+	UserID int64  `db:"user_id"`
+	Name   string `db:"name"`
+}
+
 type OrganizationIndustries struct {
 	ID             int64 `db:"id"`
 	OrganizationID int64 `db:"organization_id"`
@@ -116,4 +123,11 @@ type Persons struct {
 	LocationID        *int64  `db:"location_id"`
 	Urn               string  `db:"urn"`
 	CurrentCompanyID  *int64  `db:"current_company_id"`
+}
+
+type Users struct {
+	ID         int64   `db:"id"`
+	Username   string  `db:"username"`
+	Password   string  `db:"password"`
+	ApifyToken *string `db:"apify_token"`
 }
