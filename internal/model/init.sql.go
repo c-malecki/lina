@@ -11,7 +11,7 @@ import (
 
 const createDatasetDegreesTable = `-- name: CreateDatasetDegreesTable :exec
 CREATE TABLE IF NOT EXISTS dataset_degrees (
-  id INTEGER PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   "name" TEXT NOT NULL UNIQUE
 )
 `
@@ -23,7 +23,7 @@ func (q *Queries) CreateDatasetDegreesTable(ctx context.Context) error {
 
 const createDatasetIndustriesTable = `-- name: CreateDatasetIndustriesTable :exec
 CREATE TABLE IF NOT EXISTS dataset_industries (
-  id INTEGER PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   "name" TEXT NOT NULL UNIQUE
 )
 `
@@ -35,7 +35,8 @@ func (q *Queries) CreateDatasetIndustriesTable(ctx context.Context) error {
 
 const createDatasetLocationsTable = `-- name: CreateDatasetLocationsTable :exec
 CREATE TABLE IF NOT EXISTS dataset_locations (
-  id INTEGER PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  "name" TEXT NOT NULL UNIQUE,
   city TEXT,
   "state" TEXT,
   country TEXT,
@@ -51,7 +52,7 @@ func (q *Queries) CreateDatasetLocationsTable(ctx context.Context) error {
 
 const createDatasetSkillsTable = `-- name: CreateDatasetSkillsTable :exec
 CREATE TABLE IF NOT EXISTS dataset_skills (
-  id INTEGER PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   "name" TEXT NOT NULL UNIQUE
 )
 `
@@ -62,8 +63,8 @@ func (q *Queries) CreateDatasetSkillsTable(ctx context.Context) error {
 }
 
 const createDatasetSpecialtiesTable = `-- name: CreateDatasetSpecialtiesTable :exec
-CREATE TABLE IF NOT EXISTS dataset_specialies (
-  id INTEGER PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS dataset_specialties (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   "name" TEXT NOT NULL UNIQUE
 )
 `
@@ -75,7 +76,7 @@ func (q *Queries) CreateDatasetSpecialtiesTable(ctx context.Context) error {
 
 const createDatasetStudyFieldsTable = `-- name: CreateDatasetStudyFieldsTable :exec
 CREATE TABLE IF NOT EXISTS dataset_study_fields (
-  id INTEGER PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   "name" TEXT NOT NULL UNIQUE
 )
 `
@@ -87,7 +88,7 @@ func (q *Queries) CreateDatasetStudyFieldsTable(ctx context.Context) error {
 
 const createEducationsTable = `-- name: CreateEducationsTable :exec
 CREATE TABLE IF NOT EXISTS educations (
-  id INTEGER PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   person_id INTEGER NOT NULL,
   organization_id INTEGER NOT NULL,
   degree_id INTEGER NOT NULL,
@@ -111,11 +112,11 @@ func (q *Queries) CreateEducationsTable(ctx context.Context) error {
 
 const createExperiencesTable = `-- name: CreateExperiencesTable :exec
 CREATE TABLE IF NOT EXISTS experiences (
-  id INTEGER PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   person_id INTEGER NOT NULL,
   organization_id INTEGER NOT NULL,
   title TEXT NOT NULL,
-  location_id INTEGER,
+  location_raw TEXT,
   "description" TEXT,
   start_year INTEGER,
   start_month TEXT,
@@ -124,8 +125,7 @@ CREATE TABLE IF NOT EXISTS experiences (
   end_month TEXT,
   skills_url TEXT,
   FOREIGN KEY (person_id) REFERENCES persons(id) ON DELETE CASCADE,
-  FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
-  FOREIGN KEY (location_id) REFERENCES dataset_locations(id) ON DELETE SET NULL
+  FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
 )
 `
 
@@ -136,7 +136,7 @@ func (q *Queries) CreateExperiencesTable(ctx context.Context) error {
 
 const createNetworkConnectionsTable = `-- name: CreateNetworkConnectionsTable :exec
 CREATE TABLE IF NOT EXISTS network_connections (
-  id INTEGER PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   network_id INTEGER NOT NULL,
   person_id INTEGER NOT NULL,
   UNIQUE (network_id, person_id),
@@ -152,9 +152,10 @@ func (q *Queries) CreateNetworkConnectionsTable(ctx context.Context) error {
 
 const createNetworksTable = `-- name: CreateNetworksTable :exec
 CREATE TABLE IF NOT EXISTS networks (
-  id INTEGER PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
   "name" TEXT NOT NULL,
+  updated_at INTEGER,
   UNIQUE (user_id, "name"),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 )
@@ -167,7 +168,7 @@ func (q *Queries) CreateNetworksTable(ctx context.Context) error {
 
 const createOrganizationIndustriesTable = `-- name: CreateOrganizationIndustriesTable :exec
 CREATE TABLE IF NOT EXISTS organization_industries (
-  id INTEGER PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   organization_id INTEGER NOT NULL,
   industry_id INTEGER NOT NULL,
   UNIQUE (organization_id, industry_id),
@@ -183,7 +184,7 @@ func (q *Queries) CreateOrganizationIndustriesTable(ctx context.Context) error {
 
 const createOrganizationLocationsTable = `-- name: CreateOrganizationLocationsTable :exec
 CREATE TABLE IF NOT EXISTS organization_locations (
-  id INTEGER PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   organization_id INTEGER NOT NULL,
   location_id INTEGER NOT NULL,
   is_headquarters INTEGER NOT NULL DEFAULT 0,
@@ -200,7 +201,7 @@ func (q *Queries) CreateOrganizationLocationsTable(ctx context.Context) error {
 
 const createOrganizationSpecialtiesTable = `-- name: CreateOrganizationSpecialtiesTable :exec
 CREATE TABLE IF NOT EXISTS organization_specialties (
-  id INTEGER PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   organization_id INTEGER NOT NULL,
   specialty_id INTEGER NOT NULL,
   UNIQUE (organization_id, specialty_id),
@@ -216,7 +217,7 @@ func (q *Queries) CreateOrganizationSpecialtiesTable(ctx context.Context) error 
 
 const createOrganizationsTable = `-- name: CreateOrganizationsTable :exec
 CREATE TABLE IF NOT EXISTS organizations (
-  id INTEGER PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   "name" TEXT NOT NULL,
   universal_name TEXT NOT NULL,
   website TEXT,
@@ -227,7 +228,9 @@ CREATE TABLE IF NOT EXISTS organizations (
   organization_type INTEGER NOT NULL DEFAULT 0,
   employee_count INTEGER,
   student_count INTEGER,
-  urn TEXT NOT NULL UNIQUE
+  urn TEXT NOT NULL UNIQUE,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER
 )
 `
 
@@ -238,7 +241,7 @@ func (q *Queries) CreateOrganizationsTable(ctx context.Context) error {
 
 const createPersonsTable = `-- name: CreatePersonsTable :exec
 CREATE TABLE IF NOT EXISTS persons (
-  id INTEGER PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
   headline TEXT,
@@ -249,6 +252,8 @@ CREATE TABLE IF NOT EXISTS persons (
   location_id INTEGER,
   urn TEXT NOT NULL UNIQUE,
   current_company_id INTEGER,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER,
   FOREIGN KEY (location_id) REFERENCES dataset_locations(id) ON DELETE SET NULL,
   FOREIGN KEY (current_company_id) REFERENCES organizations(id) ON DELETE SET NULL
 )
@@ -261,10 +266,12 @@ func (q *Queries) CreatePersonsTable(ctx context.Context) error {
 
 const createUsersTable = `-- name: CreateUsersTable :exec
 CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT NOT NULL,
   "password" TEXT NOT NULL,
-  apify_token TEXT
+  apify_token TEXT,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER
 )
 `
 

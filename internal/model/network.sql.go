@@ -7,7 +7,6 @@ package model
 
 import (
 	"context"
-	"strings"
 )
 
 const insertNetwork = `-- name: InsertNetwork :exec
@@ -24,19 +23,41 @@ func (q *Queries) InsertNetwork(ctx context.Context, arg InsertNetworkParams) er
 	return err
 }
 
+const insertNetworkConnection = `-- name: InsertNetworkConnection :exec
+INSERT INTO network_connections
+(network_id, person_id)
+VALUES
+(?, ?)
+`
+
+type InsertNetworkConnectionParams struct {
+	NetworkID int64 `db:"network_id"`
+	PersonID  int64 `db:"person_id"`
+}
+
+func (q *Queries) InsertNetworkConnection(ctx context.Context, arg InsertNetworkConnectionParams) error {
+	_, err := q.db.ExecContext(ctx, insertNetworkConnection, arg.NetworkID, arg.PersonID)
+	return err
+}
+
 const selectNetworkByUserID = `-- name: SelectNetworkByUserID :one
-SELECT id, user_id, name FROM networks WHERE user_id = ?
+SELECT id, user_id, name, updated_at FROM networks WHERE user_id = ?
 `
 
 func (q *Queries) SelectNetworkByUserID(ctx context.Context, userID int64) (Networks, error) {
 	row := q.db.QueryRowContext(ctx, selectNetworkByUserID, userID)
 	var i Networks
-	err := row.Scan(&i.ID, &i.UserID, &i.Name)
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Name,
+		&i.UpdatedAt,
+	)
 	return i, err
 }
 
 const selectNetworks = `-- name: SelectNetworks :many
-SELECT id, user_id, name FROM networks WHERE user_id = ? LIMIT ? OFFSET ?
+SELECT id, user_id, name, updated_at FROM networks WHERE user_id = ? LIMIT ? OFFSET ?
 `
 
 type SelectNetworksParams struct {
@@ -54,49 +75,12 @@ func (q *Queries) SelectNetworks(ctx context.Context, arg SelectNetworksParams) 
 	items := []Networks{}
 	for rows.Next() {
 		var i Networks
-		if err := rows.Scan(&i.ID, &i.UserID, &i.Name); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const selectPersonsByLinkedinURLs = `-- name: SelectPersonsByLinkedinURLs :many
-SELECT id, profile_url FROM persons WHERE profile_url IN (/*SLICE:linkedin_urls*/?)
-`
-
-type SelectPersonsByLinkedinURLsRow struct {
-	ID         int64  `db:"id"`
-	ProfileUrl string `db:"profile_url"`
-}
-
-func (q *Queries) SelectPersonsByLinkedinURLs(ctx context.Context, linkedinUrls []string) ([]SelectPersonsByLinkedinURLsRow, error) {
-	query := selectPersonsByLinkedinURLs
-	var queryParams []interface{}
-	if len(linkedinUrls) > 0 {
-		for _, v := range linkedinUrls {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:linkedin_urls*/?", strings.Repeat(",?", len(linkedinUrls))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:linkedin_urls*/?", "NULL", 1)
-	}
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []SelectPersonsByLinkedinURLsRow{}
-	for rows.Next() {
-		var i SelectPersonsByLinkedinURLsRow
-		if err := rows.Scan(&i.ID, &i.ProfileUrl); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Name,
+			&i.UpdatedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

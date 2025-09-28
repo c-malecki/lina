@@ -8,11 +8,57 @@ import (
 	"path/filepath"
 
 	"github.com/c-malecki/lina/internal/model"
+	_ "modernc.org/sqlite"
 )
 
 type DBW struct {
 	DB   *sql.DB
 	SQLC *model.Queries
+}
+
+type Seq struct {
+	Name string `db:"name"`
+	Seq  int64  `db:"seq"`
+}
+
+var SeqsMap = map[string]int64{
+	"dataset_degrees":      0,
+	"dataset_industries":   0,
+	"dataset_locations":    0,
+	"dataset_skills":       0,
+	"dataset_specialties":  0,
+	"dataset_study_fields": 0,
+	"educations":           0,
+	"experiences":          0,
+	"organizations":        0,
+	"persons":              0,
+}
+
+func (dbw *DBW) QuerySeqs(ctx context.Context) (map[string]int64, error) {
+	rows, err := dbw.DB.QueryContext(ctx, `select * from sqlite_sequence;`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := SeqsMap
+	for rows.Next() {
+		var i Seq
+		if err := rows.Scan(
+			&i.Name,
+			&i.Seq,
+		); err != nil {
+			return nil, err
+		}
+		items[i.Name] = i.Seq
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return items, nil
 }
 
 func InitDB(ctx context.Context) (*DBW, error) {
@@ -147,4 +193,42 @@ func InitDB(ctx context.Context) (*DBW, error) {
 	}
 
 	return dbw, nil
+}
+
+func InitTestDBW(dir string) (*DBW, error) {
+	db, err := sql.Open("sqlite", filepath.Join(dir, "build", "data", "lina.db"))
+	if err != nil {
+		return nil, fmt.Errorf("sql.Open %w", err)
+	}
+
+	err = db.Ping()
+	if err != nil {
+		return nil, fmt.Errorf("db.Ping %w", err)
+	}
+
+	dbw := &DBW{
+		DB:   db,
+		SQLC: model.New(db),
+	}
+
+	return dbw, nil
+}
+
+func FindRootDir() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir, nil
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return "", fmt.Errorf("project root not found")
+		}
+		dir = parent
+	}
 }

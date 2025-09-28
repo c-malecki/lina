@@ -1,8 +1,11 @@
 -- name: CountUsers :one
 SELECT COUNT(*) FROM users;
 
+-- name: SelectUsers :many
+SELECT * FROM users;
+
 -- name: InsertUser :exec
-INSERT INTO users (username, "password") VALUES (?, ?);
+INSERT INTO users (username, "password", created_at) VALUES (?, ?, ?);
 
 -- name: SelectUser :one
 SELECT * FROM users WHERE username = ?;

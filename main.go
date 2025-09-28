@@ -11,7 +11,6 @@ import (
 	"github.com/c-malecki/lina/internal/action"
 	"github.com/c-malecki/lina/internal/dbw"
 	"github.com/c-malecki/lina/internal/util"
-	_ "modernc.org/sqlite"
 )
 
 func main() {

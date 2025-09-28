@@ -98,7 +98,7 @@ func ProceedWithEnrichment(ctx context.Context, DBW *dbw.DBW, state *util.State,
 		return nil
 	}
 
-	// do apify stuff
+	// do apify stuff with newPersonsUrls
 
 	return nil
 }

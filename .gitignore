@@ -5,3 +5,4 @@ build/*
 build/data/*
 !build/logs
 build/logs/*
+testdata

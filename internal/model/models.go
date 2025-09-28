@@ -16,6 +16,7 @@ type DatasetIndustries struct {
 
 type DatasetLocations struct {
 	ID          int64   `db:"id"`
+	Name        string  `db:"name"`
 	City        *string `db:"city"`
 	State       *string `db:"state"`
 	Country     *string `db:"country"`
@@ -27,7 +28,7 @@ type DatasetSkills struct {
 	Name string `db:"name"`
 }
 
-type DatasetSpecialies struct {
+type DatasetSpecialties struct {
 	ID   int64  `db:"id"`
 	Name string `db:"name"`
 }
@@ -55,7 +56,7 @@ type Experiences struct {
 	PersonID       int64   `db:"person_id"`
 	OrganizationID int64   `db:"organization_id"`
 	Title          string  `db:"title"`
-	LocationID     *int64  `db:"location_id"`
+	LocationRaw    *string `db:"location_raw"`
 	Description    *string `db:"description"`
 	StartYear      *int64  `db:"start_year"`
 	StartMonth     *string `db:"start_month"`
@@ -72,9 +73,10 @@ type NetworkConnections struct {
 }
 
 type Networks struct {
-	ID     int64  `db:"id"`
-	UserID int64  `db:"user_id"`
-	Name   string `db:"name"`
+	ID        int64  `db:"id"`
+	UserID    int64  `db:"user_id"`
+	Name      string `db:"name"`
+	UpdatedAt *int64 `db:"updated_at"`
 }
 
 type OrganizationIndustries struct {
@@ -109,6 +111,8 @@ type Organizations struct {
 	EmployeeCount    *int64  `db:"employee_count"`
 	StudentCount     *int64  `db:"student_count"`
 	Urn              string  `db:"urn"`
+	CreatedAt        int64   `db:"created_at"`
+	UpdatedAt        *int64  `db:"updated_at"`
 }
 
 type Persons struct {
@@ -123,6 +127,8 @@ type Persons struct {
 	LocationID        *int64  `db:"location_id"`
 	Urn               string  `db:"urn"`
 	CurrentCompanyID  *int64  `db:"current_company_id"`
+	CreatedAt         int64   `db:"created_at"`
+	UpdatedAt         *int64  `db:"updated_at"`
 }
 
 type Users struct {
@@ -130,4 +136,6 @@ type Users struct {
 	Username   string  `db:"username"`
 	Password   string  `db:"password"`
 	ApifyToken *string `db:"apify_token"`
+	CreatedAt  int64   `db:"created_at"`
+	UpdatedAt  *int64  `db:"updated_at"`
 }

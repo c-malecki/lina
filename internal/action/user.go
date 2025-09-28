@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/c-malecki/lina/internal/dbw"
 	"github.com/c-malecki/lina/internal/model"
@@ -59,8 +60,9 @@ func GetOrCreateUser(ctx context.Context, DBW *dbw.DBW, state *util.State) error
 			}
 
 			err = DBW.SQLC.InsertUser(ctx, model.InsertUserParams{
-				Username: username,
-				Password: string(hash),
+				Username:  username,
+				Password:  string(hash),
+				CreatedAt: time.Now().Unix(),
 			})
 			if err != nil {
 				return err

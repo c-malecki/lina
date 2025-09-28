@@ -21,21 +21,22 @@ func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 }
 
 const insertUser = `-- name: InsertUser :exec
-INSERT INTO users (username, "password") VALUES (?, ?)
+INSERT INTO users (username, "password", created_at) VALUES (?, ?, ?)
 `
 
 type InsertUserParams struct {
-	Username string `db:"username"`
-	Password string `db:"password"`
+	Username  string `db:"username"`
+	Password  string `db:"password"`
+	CreatedAt int64  `db:"created_at"`
 }
 
 func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) error {
-	_, err := q.db.ExecContext(ctx, insertUser, arg.Username, arg.Password)
+	_, err := q.db.ExecContext(ctx, insertUser, arg.Username, arg.Password, arg.CreatedAt)
 	return err
 }
 
 const selectUser = `-- name: SelectUser :one
-SELECT id, username, password, apify_token FROM users WHERE username = ?
+SELECT id, username, password, apify_token, created_at, updated_at FROM users WHERE username = ?
 `
 
 func (q *Queries) SelectUser(ctx context.Context, username string) (Users, error) {
@@ -46,8 +47,44 @@ func (q *Queries) SelectUser(ctx context.Context, username string) (Users, error
 		&i.Username,
 		&i.Password,
 		&i.ApifyToken,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const selectUsers = `-- name: SelectUsers :many
+SELECT id, username, password, apify_token, created_at, updated_at FROM users
+`
+
+func (q *Queries) SelectUsers(ctx context.Context) ([]Users, error) {
+	rows, err := q.db.QueryContext(ctx, selectUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Users{}
+	for rows.Next() {
+		var i Users
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.Password,
+			&i.ApifyToken,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateUserApifyToken = `-- name: UpdateUserApifyToken :exec
