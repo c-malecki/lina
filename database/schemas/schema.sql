@@ -17,7 +17,6 @@ CREATE TABLE IF NOT EXISTS dataset_locations (
   city TEXT,
   "state" TEXT,
   country TEXT,
-  country_code TEXT,
   UNIQUE (city, "state", country)
 );
 
@@ -110,11 +109,19 @@ CREATE TABLE IF NOT EXISTS persons (
   about TEXT,
   location_id INTEGER,
   urn TEXT NOT NULL UNIQUE,
-  current_company_id INTEGER,
   created_at INTEGER NOT NULL,
   updated_at INTEGER,
-  FOREIGN KEY (location_id) REFERENCES dataset_locations(id) ON DELETE SET NULL,
-  FOREIGN KEY (current_company_id) REFERENCES organizations(id) ON DELETE SET NULL
+  FOREIGN KEY (location_id) REFERENCES dataset_locations(id) ON DELETE SET NULL
+);
+
+-- name: CreatePersonSkillsTable :exec
+CREATE TABLE IF NOT EXISTS person_skills (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  person_id INTEGER NOT NULL,
+  skill_id INTEGER NOT NULL,
+  UNIQUE (person_id, skill_id),
+  FOREIGN KEY (person_id) REFERENCES persons(id) ON DELETE CASCADE,
+  FOREIGN KEY (skill_id) REFERENCES dataset_skills(id) ON DELETE CASCADE
 );
 
 -- name: CreateNetworksTable :exec
@@ -160,8 +167,8 @@ CREATE TABLE IF NOT EXISTS educations (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   person_id INTEGER NOT NULL,
   organization_id INTEGER NOT NULL,
-  degree_id INTEGER NOT NULL,
-  study_field_id INTEGER NOT NULL,
+  degree_id INTEGER,
+  study_field_id INTEGER,
   start_year INTEGER,
   start_month INTEGER,
   end_year INTEGER,

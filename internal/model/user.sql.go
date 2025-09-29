@@ -9,18 +9,18 @@ import (
 	"context"
 )
 
-const countUsers = `-- name: CountUsers :one
+const CountUsers = `-- name: CountUsers :one
 SELECT COUNT(*) FROM users
 `
 
 func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countUsers)
+	row := q.db.QueryRowContext(ctx, CountUsers)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const insertUser = `-- name: InsertUser :exec
+const InsertUser = `-- name: InsertUser :exec
 INSERT INTO users (username, "password", created_at) VALUES (?, ?, ?)
 `
 
@@ -31,16 +31,16 @@ type InsertUserParams struct {
 }
 
 func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) error {
-	_, err := q.db.ExecContext(ctx, insertUser, arg.Username, arg.Password, arg.CreatedAt)
+	_, err := q.db.ExecContext(ctx, InsertUser, arg.Username, arg.Password, arg.CreatedAt)
 	return err
 }
 
-const selectUser = `-- name: SelectUser :one
+const SelectUser = `-- name: SelectUser :one
 SELECT id, username, password, apify_token, created_at, updated_at FROM users WHERE username = ?
 `
 
 func (q *Queries) SelectUser(ctx context.Context, username string) (Users, error) {
-	row := q.db.QueryRowContext(ctx, selectUser, username)
+	row := q.db.QueryRowContext(ctx, SelectUser, username)
 	var i Users
 	err := row.Scan(
 		&i.ID,
@@ -53,12 +53,12 @@ func (q *Queries) SelectUser(ctx context.Context, username string) (Users, error
 	return i, err
 }
 
-const selectUsers = `-- name: SelectUsers :many
+const SelectUsers = `-- name: SelectUsers :many
 SELECT id, username, password, apify_token, created_at, updated_at FROM users
 `
 
 func (q *Queries) SelectUsers(ctx context.Context) ([]Users, error) {
-	rows, err := q.db.QueryContext(ctx, selectUsers)
+	rows, err := q.db.QueryContext(ctx, SelectUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ func (q *Queries) SelectUsers(ctx context.Context) ([]Users, error) {
 	return items, nil
 }
 
-const updateUserApifyToken = `-- name: UpdateUserApifyToken :exec
+const UpdateUserApifyToken = `-- name: UpdateUserApifyToken :exec
 UPDATE users SET apify_token = ? WHERE id = ?
 `
 
@@ -97,6 +97,6 @@ type UpdateUserApifyTokenParams struct {
 }
 
 func (q *Queries) UpdateUserApifyToken(ctx context.Context, arg UpdateUserApifyTokenParams) error {
-	_, err := q.db.ExecContext(ctx, updateUserApifyToken, arg.ApifyToken, arg.ID)
+	_, err := q.db.ExecContext(ctx, UpdateUserApifyToken, arg.ApifyToken, arg.ID)
 	return err
 }

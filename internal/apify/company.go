@@ -65,7 +65,7 @@ type LocationGeo struct {
 }
 
 type CompanyLocations struct {
-	Headquarters   *LocationCompany  `json:"headquarters" bson:"headquarters"`
+	Headquarters   LocationCompany   `json:"headquarters" bson:"headquarters"`
 	Offices        []LocationCompany `json:"offices" bson:"offices"`
 	GeoCoordinates LocationGeo       `json:"geo_cooridinates" bson:"geo_cooridinates"`
 }

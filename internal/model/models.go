@@ -15,12 +15,11 @@ type DatasetIndustries struct {
 }
 
 type DatasetLocations struct {
-	ID          int64   `db:"id"`
-	Name        string  `db:"name"`
-	City        *string `db:"city"`
-	State       *string `db:"state"`
-	Country     *string `db:"country"`
-	CountryCode *string `db:"country_code"`
+	ID      int64   `db:"id"`
+	Name    string  `db:"name"`
+	City    *string `db:"city"`
+	State   *string `db:"state"`
+	Country *string `db:"country"`
 }
 
 type DatasetSkills struct {
@@ -42,8 +41,8 @@ type Educations struct {
 	ID             int64  `db:"id"`
 	PersonID       int64  `db:"person_id"`
 	OrganizationID int64  `db:"organization_id"`
-	DegreeID       int64  `db:"degree_id"`
-	StudyFieldID   int64  `db:"study_field_id"`
+	DegreeID       *int64 `db:"degree_id"`
+	StudyFieldID   *int64 `db:"study_field_id"`
 	StartYear      *int64 `db:"start_year"`
 	StartMonth     *int64 `db:"start_month"`
 	EndYear        *int64 `db:"end_year"`
@@ -114,6 +113,12 @@ type Organizations struct {
 	UpdatedAt        *int64  `db:"updated_at"`
 }
 
+type PersonSkills struct {
+	ID       int64 `db:"id"`
+	PersonID int64 `db:"person_id"`
+	SkillID  int64 `db:"skill_id"`
+}
+
 type Persons struct {
 	ID                int64   `db:"id"`
 	FirstName         string  `db:"first_name"`
@@ -125,9 +130,129 @@ type Persons struct {
 	About             *string `db:"about"`
 	LocationID        *int64  `db:"location_id"`
 	Urn               string  `db:"urn"`
-	CurrentCompanyID  *int64  `db:"current_company_id"`
 	CreatedAt         int64   `db:"created_at"`
 	UpdatedAt         *int64  `db:"updated_at"`
+}
+
+type TmpDatasetDegrees struct {
+	ID   int64  `db:"id"`
+	Name string `db:"name"`
+}
+
+type TmpDatasetIndustries struct {
+	ID   int64  `db:"id"`
+	Name string `db:"name"`
+}
+
+type TmpDatasetLocations struct {
+	ID      int64   `db:"id"`
+	Name    string  `db:"name"`
+	City    *string `db:"city"`
+	State   *string `db:"state"`
+	Country *string `db:"country"`
+}
+
+type TmpDatasetSkills struct {
+	ID   int64  `db:"id"`
+	Name string `db:"name"`
+}
+
+type TmpDatasetSpecialties struct {
+	ID   int64  `db:"id"`
+	Name string `db:"name"`
+}
+
+type TmpDatasetStudyFields struct {
+	ID   int64  `db:"id"`
+	Name string `db:"name"`
+}
+
+type TmpEducations struct {
+	ID              int64   `db:"id"`
+	PersonUrn       string  `db:"person_urn"`
+	OrganizationUrn string  `db:"organization_urn"`
+	Degree          *string `db:"degree"`
+	StudyField      *string `db:"study_field"`
+	StartYear       *int64  `db:"start_year"`
+	StartMonth      *int64  `db:"start_month"`
+	EndYear         *int64  `db:"end_year"`
+	EndMonth        *int64  `db:"end_month"`
+}
+
+type TmpExperiences struct {
+	ID              int64   `db:"id"`
+	PersonUrn       string  `db:"person_urn"`
+	OrganizationUrn string  `db:"organization_urn"`
+	Title           string  `db:"title"`
+	LocationRaw     *string `db:"location_raw"`
+	Description     *string `db:"description"`
+	StartYear       *int64  `db:"start_year"`
+	StartMonth      *int64  `db:"start_month"`
+	IsCurrent       int64   `db:"is_current"`
+	EndYear         *int64  `db:"end_year"`
+	EndMonth        *int64  `db:"end_month"`
+	SkillsUrl       *string `db:"skills_url"`
+}
+
+type TmpNetworkConnections struct {
+	ID        int64 `db:"id"`
+	NetworkID int64 `db:"network_id"`
+	PersonID  int64 `db:"person_id"`
+}
+
+type TmpOrganizationIndustries struct {
+	ID              int64  `db:"id"`
+	OrganizationUrn string `db:"organization_urn"`
+	Industry        string `db:"industry"`
+}
+
+type TmpOrganizationLocations struct {
+	ID              int64  `db:"id"`
+	OrganizationUrn string `db:"organization_urn"`
+	Location        string `db:"location"`
+	IsHeadquarters  int64  `db:"is_headquarters"`
+}
+
+type TmpOrganizationSpecialties struct {
+	ID              int64  `db:"id"`
+	OrganizationUrn string `db:"organization_urn"`
+	Specialty       string `db:"specialty"`
+}
+
+type TmpOrganizations struct {
+	ID               int64   `db:"id"`
+	Name             string  `db:"name"`
+	UniversalName    string  `db:"universal_name"`
+	Website          *string `db:"website"`
+	ProfileUrl       string  `db:"profile_url"`
+	LogoUrl          *string `db:"logo_url"`
+	FoundedYear      *int64  `db:"founded_year"`
+	FoundedMonth     *int64  `db:"founded_month"`
+	OrganizationType int64   `db:"organization_type"`
+	EmployeeCount    *int64  `db:"employee_count"`
+	StudentCount     *int64  `db:"student_count"`
+	Urn              string  `db:"urn"`
+	CreatedAt        int64   `db:"created_at"`
+}
+
+type TmpPersonSkills struct {
+	ID        int64  `db:"id"`
+	PersonUrn string `db:"person_urn"`
+	Skill     string `db:"skill"`
+}
+
+type TmpPersons struct {
+	ID                int64   `db:"id"`
+	FirstName         string  `db:"first_name"`
+	LastName          string  `db:"last_name"`
+	Headline          *string `db:"headline"`
+	ProfileUrl        string  `db:"profile_url"`
+	PublicIdentifier  string  `db:"public_identifier"`
+	ProfilePictureUrl *string `db:"profile_picture_url"`
+	About             *string `db:"about"`
+	Location          *string `db:"location"`
+	Urn               string  `db:"urn"`
+	CreatedAt         int64   `db:"created_at"`
 }
 
 type Users struct {

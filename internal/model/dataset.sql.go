@@ -9,100 +9,239 @@ import (
 	"context"
 )
 
-const insertDatasetDegree = `-- name: InsertDatasetDegree :exec
-INSERT INTO dataset_degrees (id, "name") VALUES (?, ?)
+const InsertDatasetDegree = `-- name: InsertDatasetDegree :exec
+INSERT INTO dataset_degrees ("name") VALUES (?)
 `
 
-type InsertDatasetDegreeParams struct {
-	ID   int64  `db:"id"`
-	Name string `db:"name"`
-}
-
-func (q *Queries) InsertDatasetDegree(ctx context.Context, arg InsertDatasetDegreeParams) error {
-	_, err := q.db.ExecContext(ctx, insertDatasetDegree, arg.ID, arg.Name)
+func (q *Queries) InsertDatasetDegree(ctx context.Context, name string) error {
+	_, err := q.db.ExecContext(ctx, InsertDatasetDegree, name)
 	return err
 }
 
-const insertDatasetIndustry = `-- name: InsertDatasetIndustry :exec
-INSERT INTO dataset_industries (id, "name") VALUES (?, ?)
+const InsertDatasetIndustry = `-- name: InsertDatasetIndustry :exec
+INSERT INTO dataset_industries ("name") VALUES (?)
 `
 
-type InsertDatasetIndustryParams struct {
-	ID   int64  `db:"id"`
-	Name string `db:"name"`
-}
-
-func (q *Queries) InsertDatasetIndustry(ctx context.Context, arg InsertDatasetIndustryParams) error {
-	_, err := q.db.ExecContext(ctx, insertDatasetIndustry, arg.ID, arg.Name)
+func (q *Queries) InsertDatasetIndustry(ctx context.Context, name string) error {
+	_, err := q.db.ExecContext(ctx, InsertDatasetIndustry, name)
 	return err
 }
 
-const insertDatasetLocation = `-- name: InsertDatasetLocation :exec
+const InsertDatasetLocation = `-- name: InsertDatasetLocation :exec
 INSERT INTO dataset_locations
-(id, "name", city, "state", country, country_code)
+("name", city, "state", country)
 VALUES
-(?, ?, ?, ?, ?, ?)
+(?, ?, ?, ?)
 `
 
 type InsertDatasetLocationParams struct {
-	ID          int64   `db:"id"`
-	Name        string  `db:"name"`
-	City        *string `db:"city"`
-	State       *string `db:"state"`
-	Country     *string `db:"country"`
-	CountryCode *string `db:"country_code"`
+	Name    string  `db:"name"`
+	City    *string `db:"city"`
+	State   *string `db:"state"`
+	Country *string `db:"country"`
 }
 
 func (q *Queries) InsertDatasetLocation(ctx context.Context, arg InsertDatasetLocationParams) error {
-	_, err := q.db.ExecContext(ctx, insertDatasetLocation,
-		arg.ID,
+	_, err := q.db.ExecContext(ctx, InsertDatasetLocation,
 		arg.Name,
 		arg.City,
 		arg.State,
 		arg.Country,
-		arg.CountryCode,
 	)
 	return err
 }
 
-const insertDatasetSkill = `-- name: InsertDatasetSkill :exec
-INSERT INTO dataset_skills (id, "name") VALUES (?, ?)
+const InsertDatasetSkill = `-- name: InsertDatasetSkill :exec
+INSERT INTO dataset_skills ("name") VALUES (?)
 `
 
-type InsertDatasetSkillParams struct {
-	ID   int64  `db:"id"`
-	Name string `db:"name"`
-}
-
-func (q *Queries) InsertDatasetSkill(ctx context.Context, arg InsertDatasetSkillParams) error {
-	_, err := q.db.ExecContext(ctx, insertDatasetSkill, arg.ID, arg.Name)
+func (q *Queries) InsertDatasetSkill(ctx context.Context, name string) error {
+	_, err := q.db.ExecContext(ctx, InsertDatasetSkill, name)
 	return err
 }
 
-const insertDatasetSpecialty = `-- name: InsertDatasetSpecialty :exec
-INSERT INTO dataset_specialties (id, "name") VALUES (?, ?)
+const InsertDatasetSpecialty = `-- name: InsertDatasetSpecialty :exec
+INSERT INTO dataset_specialties ("name") VALUES (?)
 `
 
-type InsertDatasetSpecialtyParams struct {
-	ID   int64  `db:"id"`
-	Name string `db:"name"`
-}
-
-func (q *Queries) InsertDatasetSpecialty(ctx context.Context, arg InsertDatasetSpecialtyParams) error {
-	_, err := q.db.ExecContext(ctx, insertDatasetSpecialty, arg.ID, arg.Name)
+func (q *Queries) InsertDatasetSpecialty(ctx context.Context, name string) error {
+	_, err := q.db.ExecContext(ctx, InsertDatasetSpecialty, name)
 	return err
 }
 
-const insertDatasetStudyField = `-- name: InsertDatasetStudyField :exec
-INSERT INTO dataset_study_fields (id, "name") VALUES (?, ?)
+const InsertDatasetStudyField = `-- name: InsertDatasetStudyField :exec
+INSERT INTO dataset_study_fields ("name") VALUES (?)
 `
 
-type InsertDatasetStudyFieldParams struct {
-	ID   int64  `db:"id"`
-	Name string `db:"name"`
+func (q *Queries) InsertDatasetStudyField(ctx context.Context, name string) error {
+	_, err := q.db.ExecContext(ctx, InsertDatasetStudyField, name)
+	return err
 }
 
-func (q *Queries) InsertDatasetStudyField(ctx context.Context, arg InsertDatasetStudyFieldParams) error {
-	_, err := q.db.ExecContext(ctx, insertDatasetStudyField, arg.ID, arg.Name)
-	return err
+const SelectDatasetDegreesByName = `-- name: SelectDatasetDegreesByName :many
+SELECT id, name FROM dataset_degrees WHERE "name" IN (sqlic.slice(names))
+`
+
+func (q *Queries) SelectDatasetDegreesByName(ctx context.Context) ([]DatasetDegrees, error) {
+	rows, err := q.db.QueryContext(ctx, SelectDatasetDegreesByName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []DatasetDegrees{}
+	for rows.Next() {
+		var i DatasetDegrees
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const SelectDatasetIndustryByName = `-- name: SelectDatasetIndustryByName :many
+SELECT id, name FROM dataset_industries WHERE "name" IN (sqlic.slice(names))
+`
+
+func (q *Queries) SelectDatasetIndustryByName(ctx context.Context) ([]DatasetIndustries, error) {
+	rows, err := q.db.QueryContext(ctx, SelectDatasetIndustryByName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []DatasetIndustries{}
+	for rows.Next() {
+		var i DatasetIndustries
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const SelectDatasetLocationByName = `-- name: SelectDatasetLocationByName :many
+SELECT id, name, city, state, country FROM dataset_locations WHERE "name" IN (sqlic.slice(names))
+`
+
+func (q *Queries) SelectDatasetLocationByName(ctx context.Context) ([]DatasetLocations, error) {
+	rows, err := q.db.QueryContext(ctx, SelectDatasetLocationByName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []DatasetLocations{}
+	for rows.Next() {
+		var i DatasetLocations
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.City,
+			&i.State,
+			&i.Country,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const SelectDatasetSkillByName = `-- name: SelectDatasetSkillByName :many
+SELECT id, name FROM dataset_skills WHERE "name" IN (sqlic.slice(names))
+`
+
+func (q *Queries) SelectDatasetSkillByName(ctx context.Context) ([]DatasetSkills, error) {
+	rows, err := q.db.QueryContext(ctx, SelectDatasetSkillByName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []DatasetSkills{}
+	for rows.Next() {
+		var i DatasetSkills
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const SelectDatasetSpecialtyByName = `-- name: SelectDatasetSpecialtyByName :many
+SELECT id, name FROM dataset_specialties WHERE "name" IN (sqlic.slice(names))
+`
+
+func (q *Queries) SelectDatasetSpecialtyByName(ctx context.Context) ([]DatasetSpecialties, error) {
+	rows, err := q.db.QueryContext(ctx, SelectDatasetSpecialtyByName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []DatasetSpecialties{}
+	for rows.Next() {
+		var i DatasetSpecialties
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const SelectDatasetStudyFieldByName = `-- name: SelectDatasetStudyFieldByName :many
+SELECT id, name FROM dataset_study_fields WHERE "name" IN (sqlic.slice(names))
+`
+
+func (q *Queries) SelectDatasetStudyFieldByName(ctx context.Context) ([]DatasetStudyFields, error) {
+	rows, err := q.db.QueryContext(ctx, SelectDatasetStudyFieldByName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []DatasetStudyFields{}
+	for rows.Next() {
+		var i DatasetStudyFields
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

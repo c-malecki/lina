@@ -10,15 +10,14 @@ import (
 	"strings"
 )
 
-const insertOrganization = `-- name: InsertOrganization :exec
+const InsertOrganization = `-- name: InsertOrganization :exec
 INSERT INTO organizations
-(id, "name", universal_name, website, profile_url, logo_url, founded_year, founded_month, organization_type, employee_count, student_count, urn, created_at)
+("name", universal_name, website, profile_url, logo_url, founded_year, founded_month, organization_type, employee_count, student_count, urn, created_at)
 VALUES
-(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type InsertOrganizationParams struct {
-	ID               int64   `db:"id"`
 	Name             string  `db:"name"`
 	UniversalName    string  `db:"universal_name"`
 	Website          *string `db:"website"`
@@ -34,8 +33,7 @@ type InsertOrganizationParams struct {
 }
 
 func (q *Queries) InsertOrganization(ctx context.Context, arg InsertOrganizationParams) error {
-	_, err := q.db.ExecContext(ctx, insertOrganization,
-		arg.ID,
+	_, err := q.db.ExecContext(ctx, InsertOrganization,
 		arg.Name,
 		arg.UniversalName,
 		arg.Website,
@@ -52,7 +50,7 @@ func (q *Queries) InsertOrganization(ctx context.Context, arg InsertOrganization
 	return err
 }
 
-const insertOrganizationIndustry = `-- name: InsertOrganizationIndustry :exec
+const InsertOrganizationIndustry = `-- name: InsertOrganizationIndustry :exec
 INSERT INTO organization_industries
 (organization_id, industry_id)
 VALUES
@@ -65,11 +63,11 @@ type InsertOrganizationIndustryParams struct {
 }
 
 func (q *Queries) InsertOrganizationIndustry(ctx context.Context, arg InsertOrganizationIndustryParams) error {
-	_, err := q.db.ExecContext(ctx, insertOrganizationIndustry, arg.OrganizationID, arg.IndustryID)
+	_, err := q.db.ExecContext(ctx, InsertOrganizationIndustry, arg.OrganizationID, arg.IndustryID)
 	return err
 }
 
-const insertOrganizationLocation = `-- name: InsertOrganizationLocation :exec
+const InsertOrganizationLocation = `-- name: InsertOrganizationLocation :exec
 INSERT INTO organization_locations
 (organization_id, location_id, is_headquarters)
 VALUES
@@ -83,11 +81,11 @@ type InsertOrganizationLocationParams struct {
 }
 
 func (q *Queries) InsertOrganizationLocation(ctx context.Context, arg InsertOrganizationLocationParams) error {
-	_, err := q.db.ExecContext(ctx, insertOrganizationLocation, arg.OrganizationID, arg.LocationID, arg.IsHeadquarters)
+	_, err := q.db.ExecContext(ctx, InsertOrganizationLocation, arg.OrganizationID, arg.LocationID, arg.IsHeadquarters)
 	return err
 }
 
-const insertOrganizationSpecialty = `-- name: InsertOrganizationSpecialty :exec
+const InsertOrganizationSpecialty = `-- name: InsertOrganizationSpecialty :exec
 INSERT INTO organization_specialties
 (organization_id, specialty_id)
 VALUES
@@ -100,11 +98,11 @@ type InsertOrganizationSpecialtyParams struct {
 }
 
 func (q *Queries) InsertOrganizationSpecialty(ctx context.Context, arg InsertOrganizationSpecialtyParams) error {
-	_, err := q.db.ExecContext(ctx, insertOrganizationSpecialty, arg.OrganizationID, arg.SpecialtyID)
+	_, err := q.db.ExecContext(ctx, InsertOrganizationSpecialty, arg.OrganizationID, arg.SpecialtyID)
 	return err
 }
 
-const selectOrganizationsByLinkedinURLs = `-- name: SelectOrganizationsByLinkedinURLs :many
+const SelectOrganizationsByLinkedinURLs = `-- name: SelectOrganizationsByLinkedinURLs :many
 SELECT id, profile_url FROM organizations WHERE profile_url IN (/*SLICE:linkedin_urls*/?)
 `
 
@@ -114,7 +112,7 @@ type SelectOrganizationsByLinkedinURLsRow struct {
 }
 
 func (q *Queries) SelectOrganizationsByLinkedinURLs(ctx context.Context, linkedinUrls []string) ([]SelectOrganizationsByLinkedinURLsRow, error) {
-	query := selectOrganizationsByLinkedinURLs
+	query := SelectOrganizationsByLinkedinURLs
 	var queryParams []interface{}
 	if len(linkedinUrls) > 0 {
 		for _, v := range linkedinUrls {

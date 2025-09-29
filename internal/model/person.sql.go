@@ -10,15 +10,14 @@ import (
 	"strings"
 )
 
-const insertPerson = `-- name: InsertPerson :exec
+const InsertPerson = `-- name: InsertPerson :exec
 INSERT INTO persons
-(id, first_name, last_name, headline, profile_url, public_identifier, profile_picture_url, about, location_id, urn, current_company_id, created_at)
+(first_name, last_name, headline, profile_url, public_identifier, profile_picture_url, about, location_id, urn, created_at)
 VALUES
-(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type InsertPersonParams struct {
-	ID                int64   `db:"id"`
 	FirstName         string  `db:"first_name"`
 	LastName          string  `db:"last_name"`
 	Headline          *string `db:"headline"`
@@ -28,13 +27,11 @@ type InsertPersonParams struct {
 	About             *string `db:"about"`
 	LocationID        *int64  `db:"location_id"`
 	Urn               string  `db:"urn"`
-	CurrentCompanyID  *int64  `db:"current_company_id"`
 	CreatedAt         int64   `db:"created_at"`
 }
 
 func (q *Queries) InsertPerson(ctx context.Context, arg InsertPersonParams) error {
-	_, err := q.db.ExecContext(ctx, insertPerson,
-		arg.ID,
+	_, err := q.db.ExecContext(ctx, InsertPerson,
 		arg.FirstName,
 		arg.LastName,
 		arg.Headline,
@@ -44,13 +41,12 @@ func (q *Queries) InsertPerson(ctx context.Context, arg InsertPersonParams) erro
 		arg.About,
 		arg.LocationID,
 		arg.Urn,
-		arg.CurrentCompanyID,
 		arg.CreatedAt,
 	)
 	return err
 }
 
-const selectPersonsByLinkedinURLs = `-- name: SelectPersonsByLinkedinURLs :many
+const SelectPersonsByLinkedinURLs = `-- name: SelectPersonsByLinkedinURLs :many
 SELECT id, profile_url FROM persons WHERE profile_url IN (/*SLICE:linkedin_urls*/?)
 `
 
@@ -60,7 +56,7 @@ type SelectPersonsByLinkedinURLsRow struct {
 }
 
 func (q *Queries) SelectPersonsByLinkedinURLs(ctx context.Context, linkedinUrls []string) ([]SelectPersonsByLinkedinURLsRow, error) {
-	query := selectPersonsByLinkedinURLs
+	query := SelectPersonsByLinkedinURLs
 	var queryParams []interface{}
 	if len(linkedinUrls) > 0 {
 		for _, v := range linkedinUrls {

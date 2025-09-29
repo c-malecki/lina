@@ -9,7 +9,7 @@ import (
 	"context"
 )
 
-const insertNetwork = `-- name: InsertNetwork :exec
+const InsertNetwork = `-- name: InsertNetwork :exec
 INSERT INTO networks (user_id, "name") VALUES (?, ?)
 `
 
@@ -19,11 +19,11 @@ type InsertNetworkParams struct {
 }
 
 func (q *Queries) InsertNetwork(ctx context.Context, arg InsertNetworkParams) error {
-	_, err := q.db.ExecContext(ctx, insertNetwork, arg.UserID, arg.Name)
+	_, err := q.db.ExecContext(ctx, InsertNetwork, arg.UserID, arg.Name)
 	return err
 }
 
-const insertNetworkConnection = `-- name: InsertNetworkConnection :exec
+const InsertNetworkConnection = `-- name: InsertNetworkConnection :exec
 INSERT INTO network_connections
 (network_id, person_id)
 VALUES
@@ -36,16 +36,16 @@ type InsertNetworkConnectionParams struct {
 }
 
 func (q *Queries) InsertNetworkConnection(ctx context.Context, arg InsertNetworkConnectionParams) error {
-	_, err := q.db.ExecContext(ctx, insertNetworkConnection, arg.NetworkID, arg.PersonID)
+	_, err := q.db.ExecContext(ctx, InsertNetworkConnection, arg.NetworkID, arg.PersonID)
 	return err
 }
 
-const selectNetworkByUserID = `-- name: SelectNetworkByUserID :one
+const SelectNetworkByUserID = `-- name: SelectNetworkByUserID :one
 SELECT id, user_id, name, updated_at FROM networks WHERE user_id = ?
 `
 
 func (q *Queries) SelectNetworkByUserID(ctx context.Context, userID int64) (Networks, error) {
-	row := q.db.QueryRowContext(ctx, selectNetworkByUserID, userID)
+	row := q.db.QueryRowContext(ctx, SelectNetworkByUserID, userID)
 	var i Networks
 	err := row.Scan(
 		&i.ID,
@@ -56,7 +56,7 @@ func (q *Queries) SelectNetworkByUserID(ctx context.Context, userID int64) (Netw
 	return i, err
 }
 
-const selectNetworks = `-- name: SelectNetworks :many
+const SelectNetworks = `-- name: SelectNetworks :many
 SELECT id, user_id, name, updated_at FROM networks WHERE user_id = ? LIMIT ? OFFSET ?
 `
 
@@ -67,7 +67,7 @@ type SelectNetworksParams struct {
 }
 
 func (q *Queries) SelectNetworks(ctx context.Context, arg SelectNetworksParams) ([]Networks, error) {
-	rows, err := q.db.QueryContext(ctx, selectNetworks, arg.UserID, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, SelectNetworks, arg.UserID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (q *Queries) SelectNetworks(ctx context.Context, arg SelectNetworksParams) 
 	return items, nil
 }
 
-const selectPersonsByNetworkConnections = `-- name: SelectPersonsByNetworkConnections :many
+const SelectPersonsByNetworkConnections = `-- name: SelectPersonsByNetworkConnections :many
 SELECT p.id, p.profile_url
 FROM network_connections nc
 INNER JOIN persons p ON p.id = nc.person_id
@@ -107,7 +107,7 @@ type SelectPersonsByNetworkConnectionsRow struct {
 }
 
 func (q *Queries) SelectPersonsByNetworkConnections(ctx context.Context, networkID int64) ([]SelectPersonsByNetworkConnectionsRow, error) {
-	rows, err := q.db.QueryContext(ctx, selectPersonsByNetworkConnections, networkID)
+	rows, err := q.db.QueryContext(ctx, SelectPersonsByNetworkConnections, networkID)
 	if err != nil {
 		return nil, err
 	}

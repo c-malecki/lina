@@ -9,34 +9,34 @@ import (
 	"context"
 )
 
-const countCompanies = `-- name: CountCompanies :one
+const CountCompanies = `-- name: CountCompanies :one
 SELECT COUNT(*) FROM organizations WHERE organization_type = 0
 `
 
 func (q *Queries) CountCompanies(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countCompanies)
+	row := q.db.QueryRowContext(ctx, CountCompanies)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const countPersons = `-- name: CountPersons :one
+const CountPersons = `-- name: CountPersons :one
 SELECT COUNT(*) FROM persons
 `
 
 func (q *Queries) CountPersons(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countPersons)
+	row := q.db.QueryRowContext(ctx, CountPersons)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
 }
 
-const countSchools = `-- name: CountSchools :one
+const CountSchools = `-- name: CountSchools :one
 SELECT COUNT(*) FROM organizations WHERE organization_type = 1
 `
 
 func (q *Queries) CountSchools(ctx context.Context) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countSchools)
+	row := q.db.QueryRowContext(ctx, CountSchools)
 	var count int64
 	err := row.Scan(&count)
 	return count, err

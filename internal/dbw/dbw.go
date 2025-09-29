@@ -21,7 +21,9 @@ type Seq struct {
 	Seq  int64  `db:"seq"`
 }
 
-var SeqsMap = map[string]int64{
+type IDSequenceMap map[string]int64
+
+var seqsMap = map[string]int64{
 	"dataset_degrees":      0,
 	"dataset_industries":   0,
 	"dataset_locations":    0,
@@ -34,13 +36,13 @@ var SeqsMap = map[string]int64{
 	"persons":              0,
 }
 
-func (dbw *DBW) QuerySeqs(ctx context.Context) (map[string]int64, error) {
+func (dbw *DBW) QuerySeqs(ctx context.Context) (IDSequenceMap, error) {
 	rows, err := dbw.DB.QueryContext(ctx, `select * from sqlite_sequence;`)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := SeqsMap
+	items := seqsMap
 	for rows.Next() {
 		var i Seq
 		if err := rows.Scan(
@@ -149,10 +151,13 @@ func InitDB(ctx context.Context) (*DBW, error) {
 	_, err = tx.Exec(`
 		CREATE INDEX IF NOT EXISTS index_person_name ON persons(last_name, first_name);
 		CREATE INDEX IF NOT EXISTS index_person_location ON persons(location_id);
-		CREATE INDEX IF NOT EXISTS index_person_current_company ON persons(current_company_id);
 	`)
 	if err != nil {
 		return nil, fmt.Errorf("tx.Exec CREATE persons indexes %w", err)
+	}
+	err = qtx.CreatePersonSkillsTable(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("qtx.CreatePersonSkillsTable %w", err)
 	}
 	err = qtx.CreateNetworksTable(ctx)
 	if err != nil {

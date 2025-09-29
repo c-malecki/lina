@@ -9,7 +9,7 @@ import (
 	"context"
 )
 
-const insertEducation = `-- name: InsertEducation :exec
+const InsertEducation = `-- name: InsertEducation :exec
 INSERT INTO educations
 (person_id, organization_id, degree_id, study_field_id, start_year, start_month, end_year, end_month)
 VALUES
@@ -19,8 +19,8 @@ VALUES
 type InsertEducationParams struct {
 	PersonID       int64  `db:"person_id"`
 	OrganizationID int64  `db:"organization_id"`
-	DegreeID       int64  `db:"degree_id"`
-	StudyFieldID   int64  `db:"study_field_id"`
+	DegreeID       *int64 `db:"degree_id"`
+	StudyFieldID   *int64 `db:"study_field_id"`
 	StartYear      *int64 `db:"start_year"`
 	StartMonth     *int64 `db:"start_month"`
 	EndYear        *int64 `db:"end_year"`
@@ -28,7 +28,7 @@ type InsertEducationParams struct {
 }
 
 func (q *Queries) InsertEducation(ctx context.Context, arg InsertEducationParams) error {
-	_, err := q.db.ExecContext(ctx, insertEducation,
+	_, err := q.db.ExecContext(ctx, InsertEducation,
 		arg.PersonID,
 		arg.OrganizationID,
 		arg.DegreeID,

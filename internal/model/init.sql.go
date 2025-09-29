@@ -9,7 +9,7 @@ import (
 	"context"
 )
 
-const createDatasetDegreesTable = `-- name: CreateDatasetDegreesTable :exec
+const CreateDatasetDegreesTable = `-- name: CreateDatasetDegreesTable :exec
 CREATE TABLE IF NOT EXISTS dataset_degrees (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   "name" TEXT NOT NULL UNIQUE
@@ -17,11 +17,11 @@ CREATE TABLE IF NOT EXISTS dataset_degrees (
 `
 
 func (q *Queries) CreateDatasetDegreesTable(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, createDatasetDegreesTable)
+	_, err := q.db.ExecContext(ctx, CreateDatasetDegreesTable)
 	return err
 }
 
-const createDatasetIndustriesTable = `-- name: CreateDatasetIndustriesTable :exec
+const CreateDatasetIndustriesTable = `-- name: CreateDatasetIndustriesTable :exec
 CREATE TABLE IF NOT EXISTS dataset_industries (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   "name" TEXT NOT NULL UNIQUE
@@ -29,28 +29,27 @@ CREATE TABLE IF NOT EXISTS dataset_industries (
 `
 
 func (q *Queries) CreateDatasetIndustriesTable(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, createDatasetIndustriesTable)
+	_, err := q.db.ExecContext(ctx, CreateDatasetIndustriesTable)
 	return err
 }
 
-const createDatasetLocationsTable = `-- name: CreateDatasetLocationsTable :exec
+const CreateDatasetLocationsTable = `-- name: CreateDatasetLocationsTable :exec
 CREATE TABLE IF NOT EXISTS dataset_locations (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   "name" TEXT NOT NULL UNIQUE,
   city TEXT,
   "state" TEXT,
   country TEXT,
-  country_code TEXT,
   UNIQUE (city, "state", country)
 )
 `
 
 func (q *Queries) CreateDatasetLocationsTable(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, createDatasetLocationsTable)
+	_, err := q.db.ExecContext(ctx, CreateDatasetLocationsTable)
 	return err
 }
 
-const createDatasetSkillsTable = `-- name: CreateDatasetSkillsTable :exec
+const CreateDatasetSkillsTable = `-- name: CreateDatasetSkillsTable :exec
 CREATE TABLE IF NOT EXISTS dataset_skills (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   "name" TEXT NOT NULL UNIQUE
@@ -58,11 +57,11 @@ CREATE TABLE IF NOT EXISTS dataset_skills (
 `
 
 func (q *Queries) CreateDatasetSkillsTable(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, createDatasetSkillsTable)
+	_, err := q.db.ExecContext(ctx, CreateDatasetSkillsTable)
 	return err
 }
 
-const createDatasetSpecialtiesTable = `-- name: CreateDatasetSpecialtiesTable :exec
+const CreateDatasetSpecialtiesTable = `-- name: CreateDatasetSpecialtiesTable :exec
 CREATE TABLE IF NOT EXISTS dataset_specialties (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   "name" TEXT NOT NULL UNIQUE
@@ -70,11 +69,11 @@ CREATE TABLE IF NOT EXISTS dataset_specialties (
 `
 
 func (q *Queries) CreateDatasetSpecialtiesTable(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, createDatasetSpecialtiesTable)
+	_, err := q.db.ExecContext(ctx, CreateDatasetSpecialtiesTable)
 	return err
 }
 
-const createDatasetStudyFieldsTable = `-- name: CreateDatasetStudyFieldsTable :exec
+const CreateDatasetStudyFieldsTable = `-- name: CreateDatasetStudyFieldsTable :exec
 CREATE TABLE IF NOT EXISTS dataset_study_fields (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   "name" TEXT NOT NULL UNIQUE
@@ -82,17 +81,17 @@ CREATE TABLE IF NOT EXISTS dataset_study_fields (
 `
 
 func (q *Queries) CreateDatasetStudyFieldsTable(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, createDatasetStudyFieldsTable)
+	_, err := q.db.ExecContext(ctx, CreateDatasetStudyFieldsTable)
 	return err
 }
 
-const createEducationsTable = `-- name: CreateEducationsTable :exec
+const CreateEducationsTable = `-- name: CreateEducationsTable :exec
 CREATE TABLE IF NOT EXISTS educations (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   person_id INTEGER NOT NULL,
   organization_id INTEGER NOT NULL,
-  degree_id INTEGER NOT NULL,
-  study_field_id INTEGER NOT NULL,
+  degree_id INTEGER,
+  study_field_id INTEGER,
   start_year INTEGER,
   start_month INTEGER,
   end_year INTEGER,
@@ -105,11 +104,11 @@ CREATE TABLE IF NOT EXISTS educations (
 `
 
 func (q *Queries) CreateEducationsTable(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, createEducationsTable)
+	_, err := q.db.ExecContext(ctx, CreateEducationsTable)
 	return err
 }
 
-const createExperiencesTable = `-- name: CreateExperiencesTable :exec
+const CreateExperiencesTable = `-- name: CreateExperiencesTable :exec
 CREATE TABLE IF NOT EXISTS experiences (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   person_id INTEGER NOT NULL,
@@ -129,11 +128,11 @@ CREATE TABLE IF NOT EXISTS experiences (
 `
 
 func (q *Queries) CreateExperiencesTable(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, createExperiencesTable)
+	_, err := q.db.ExecContext(ctx, CreateExperiencesTable)
 	return err
 }
 
-const createNetworkConnectionsTable = `-- name: CreateNetworkConnectionsTable :exec
+const CreateNetworkConnectionsTable = `-- name: CreateNetworkConnectionsTable :exec
 CREATE TABLE IF NOT EXISTS network_connections (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   network_id INTEGER NOT NULL,
@@ -145,11 +144,11 @@ CREATE TABLE IF NOT EXISTS network_connections (
 `
 
 func (q *Queries) CreateNetworkConnectionsTable(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, createNetworkConnectionsTable)
+	_, err := q.db.ExecContext(ctx, CreateNetworkConnectionsTable)
 	return err
 }
 
-const createNetworksTable = `-- name: CreateNetworksTable :exec
+const CreateNetworksTable = `-- name: CreateNetworksTable :exec
 CREATE TABLE IF NOT EXISTS networks (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
@@ -161,11 +160,11 @@ CREATE TABLE IF NOT EXISTS networks (
 `
 
 func (q *Queries) CreateNetworksTable(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, createNetworksTable)
+	_, err := q.db.ExecContext(ctx, CreateNetworksTable)
 	return err
 }
 
-const createOrganizationIndustriesTable = `-- name: CreateOrganizationIndustriesTable :exec
+const CreateOrganizationIndustriesTable = `-- name: CreateOrganizationIndustriesTable :exec
 CREATE TABLE IF NOT EXISTS organization_industries (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   organization_id INTEGER NOT NULL,
@@ -177,11 +176,11 @@ CREATE TABLE IF NOT EXISTS organization_industries (
 `
 
 func (q *Queries) CreateOrganizationIndustriesTable(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, createOrganizationIndustriesTable)
+	_, err := q.db.ExecContext(ctx, CreateOrganizationIndustriesTable)
 	return err
 }
 
-const createOrganizationLocationsTable = `-- name: CreateOrganizationLocationsTable :exec
+const CreateOrganizationLocationsTable = `-- name: CreateOrganizationLocationsTable :exec
 CREATE TABLE IF NOT EXISTS organization_locations (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   organization_id INTEGER NOT NULL,
@@ -194,11 +193,11 @@ CREATE TABLE IF NOT EXISTS organization_locations (
 `
 
 func (q *Queries) CreateOrganizationLocationsTable(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, createOrganizationLocationsTable)
+	_, err := q.db.ExecContext(ctx, CreateOrganizationLocationsTable)
 	return err
 }
 
-const createOrganizationSpecialtiesTable = `-- name: CreateOrganizationSpecialtiesTable :exec
+const CreateOrganizationSpecialtiesTable = `-- name: CreateOrganizationSpecialtiesTable :exec
 CREATE TABLE IF NOT EXISTS organization_specialties (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   organization_id INTEGER NOT NULL,
@@ -210,11 +209,11 @@ CREATE TABLE IF NOT EXISTS organization_specialties (
 `
 
 func (q *Queries) CreateOrganizationSpecialtiesTable(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, createOrganizationSpecialtiesTable)
+	_, err := q.db.ExecContext(ctx, CreateOrganizationSpecialtiesTable)
 	return err
 }
 
-const createOrganizationsTable = `-- name: CreateOrganizationsTable :exec
+const CreateOrganizationsTable = `-- name: CreateOrganizationsTable :exec
 CREATE TABLE IF NOT EXISTS organizations (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   "name" TEXT NOT NULL,
@@ -234,11 +233,27 @@ CREATE TABLE IF NOT EXISTS organizations (
 `
 
 func (q *Queries) CreateOrganizationsTable(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, createOrganizationsTable)
+	_, err := q.db.ExecContext(ctx, CreateOrganizationsTable)
 	return err
 }
 
-const createPersonsTable = `-- name: CreatePersonsTable :exec
+const CreatePersonSkillsTable = `-- name: CreatePersonSkillsTable :exec
+CREATE TABLE IF NOT EXISTS person_skills (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  person_id INTEGER NOT NULL,
+  skill_id INTEGER NOT NULL,
+  UNIQUE (person_id, skill_id),
+  FOREIGN KEY (person_id) REFERENCES persons(id) ON DELETE CASCADE,
+  FOREIGN KEY (skill_id) REFERENCES dataset_skills(id) ON DELETE CASCADE
+)
+`
+
+func (q *Queries) CreatePersonSkillsTable(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, CreatePersonSkillsTable)
+	return err
+}
+
+const CreatePersonsTable = `-- name: CreatePersonsTable :exec
 CREATE TABLE IF NOT EXISTS persons (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   first_name TEXT NOT NULL,
@@ -250,20 +265,18 @@ CREATE TABLE IF NOT EXISTS persons (
   about TEXT,
   location_id INTEGER,
   urn TEXT NOT NULL UNIQUE,
-  current_company_id INTEGER,
   created_at INTEGER NOT NULL,
   updated_at INTEGER,
-  FOREIGN KEY (location_id) REFERENCES dataset_locations(id) ON DELETE SET NULL,
-  FOREIGN KEY (current_company_id) REFERENCES organizations(id) ON DELETE SET NULL
+  FOREIGN KEY (location_id) REFERENCES dataset_locations(id) ON DELETE SET NULL
 )
 `
 
 func (q *Queries) CreatePersonsTable(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, createPersonsTable)
+	_, err := q.db.ExecContext(ctx, CreatePersonsTable)
 	return err
 }
 
-const createUsersTable = `-- name: CreateUsersTable :exec
+const CreateUsersTable = `-- name: CreateUsersTable :exec
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT NOT NULL,
@@ -275,6 +288,6 @@ CREATE TABLE IF NOT EXISTS users (
 `
 
 func (q *Queries) CreateUsersTable(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, createUsersTable)
+	_, err := q.db.ExecContext(ctx, CreateUsersTable)
 	return err
 }
