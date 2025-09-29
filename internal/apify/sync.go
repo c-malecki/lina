@@ -1,5 +1,0 @@
-package apify
-
-func ProcessPersonResponses() {
-
-}

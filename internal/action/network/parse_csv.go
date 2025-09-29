@@ -1,8 +1,7 @@
-package action
+package network
 
 import (
 	"bufio"
-	"context"
 	"encoding/csv"
 	"errors"
 	"fmt"
@@ -10,9 +9,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/c-malecki/lina/internal/dbw"
-	"github.com/c-malecki/lina/internal/util"
+	"github.com/c-malecki/go-utils/parse/pstring"
 )
+
+const bom = "\uFEFF"
+
+var liCsvHeaders = [...]string{"first name", "last name", "url", "email address", "company", "position", "connected on"}
 
 func ParseLinkedinCsv() ([]string, error) {
 	var valid bool
@@ -40,72 +42,6 @@ func ParseLinkedinCsv() ([]string, error) {
 
 	return liUrls, nil
 }
-
-func ProceedWithEnrichment(ctx context.Context, DBW *dbw.DBW, state *util.State, urls []string) error {
-	persons, err := DBW.SQLC.SelectPersonsByLinkedinURLs(ctx, urls)
-	if err != nil {
-		return err
-	}
-
-	personMap := make(map[string]int64)
-	for _, v := range persons {
-		personMap[v.ProfileUrl] = v.ID
-	}
-
-	var newPersonUrls []string
-	existingMap := make(map[string]int64)
-
-	for _, v := range urls {
-		p, ok := personMap[v]
-		if !ok {
-			newPersonUrls = append(newPersonUrls, v)
-		} else {
-			existingMap[v] = p
-		}
-	}
-
-	connectionsMap := make(map[string]int64)
-	connections, err := DBW.SQLC.SelectPersonsByNetworkConnections(ctx, state.Network.ID)
-	if err != nil {
-		return err
-	}
-
-	var removeConnections []int64
-	for _, v := range connections {
-		connectionsMap[v.ProfileUrl] = v.ID
-		_, ok := existingMap[v.ProfileUrl]
-		if !ok {
-			removeConnections = append(removeConnections, v.ID)
-		}
-	}
-
-	var addConnections []int64
-	for k, v := range existingMap {
-		_, ok := connectionsMap[k]
-		if !ok {
-			addConnections = append(addConnections, v)
-		}
-	}
-
-	fmt.Printf("\n\n%d new connections will be added and %d connections will be removed\n", len(addConnections)+len(newPersonUrls), len(removeConnections))
-	fmt.Print("Do you wish to proceed? [Y/n] ")
-
-	reader := bufio.NewReader(os.Stdin)
-	opt, _ := reader.ReadString('\n')
-	opt = strings.TrimSpace(opt)
-
-	if opt == "n" {
-		return nil
-	}
-
-	// do apify stuff with newPersonsUrls
-
-	return nil
-}
-
-const bom = "\uFEFF"
-
-var liCsvHeaders = [...]string{"first name", "last name", "url", "email address", "company", "position", "connected on"}
 
 func validateLinkedinCsv(file *os.File) ([]string, error) {
 	reader := csv.NewReader(file)
@@ -162,7 +98,7 @@ func validateLinkedinCsv(file *os.File) ([]string, error) {
 			return nil, fmt.Errorf("read csv %w", err)
 		}
 
-		li, err := util.ExtractPersonLinkedin(line[2])
+		li, err := pstring.ExtractPersonLinkedin(line[2])
 		if err != nil {
 			invalidCt += 1
 			continue

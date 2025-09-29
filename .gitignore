@@ -1,4 +1,5 @@
 info.md
+dev
 examples
 build/*
 !build/data

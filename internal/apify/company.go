@@ -4,6 +4,9 @@ package apify
 type Company struct {
 	InputIdentifier string           `json:"input_identifier" bson:"input_identifier"`
 	BasicInfo       CompanyBasicInfo `json:"basic_info" bson:"basic_info"`
+	Stats           Stats            `json:"stats" bson:"stats"`
+	Locations       CompanyLocations `json:"locations" bson:"locations"`
+	Media           Media            `json:"media" bson:"media"`
 	CompanyURN      string           `json:"company_urn" bson:"company_urn"`
 }
 
@@ -62,7 +65,7 @@ type LocationGeo struct {
 }
 
 type CompanyLocations struct {
-	Headquarters   LocationCompany   `json:"headquarters" bson:"headquarters"`
+	Headquarters   *LocationCompany  `json:"headquarters" bson:"headquarters"`
 	Offices        []LocationCompany `json:"offices" bson:"offices"`
 	GeoCoordinates LocationGeo       `json:"geo_cooridinates" bson:"geo_cooridinates"`
 }

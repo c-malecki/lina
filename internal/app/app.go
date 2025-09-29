@@ -1,4 +1,4 @@
-package action
+package app
 
 import (
 	"bufio"
@@ -9,13 +9,80 @@ import (
 	"strings"
 	"time"
 
+	"github.com/c-malecki/lina/internal/action"
+	"github.com/c-malecki/lina/internal/action/user"
 	"github.com/c-malecki/lina/internal/dbw"
 	"github.com/c-malecki/lina/internal/model"
-	"github.com/c-malecki/lina/internal/util"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func GetOrCreateUser(ctx context.Context, DBW *dbw.DBW, state *util.State) error {
+type App struct {
+	User    *model.Users
+	Network *model.Networks
+}
+
+func (app *App) PrintActions() {
+	fmt.Print("\nActions:\n\n")
+	fmt.Println("1. Update Connections")
+	fmt.Println("2. Search (disabled)")
+	fmt.Println("3. Update Apify token")
+	fmt.Println("4. Quit")
+	fmt.Print("\nSelection: ")
+}
+
+func (app *App) PrintNetworkStats(ctx context.Context, DBW *dbw.DBW) error {
+	pct, err := DBW.SQLC.CountPersons(ctx)
+	if err != nil {
+		return err
+	}
+	cct, err := DBW.SQLC.CountCompanies(ctx)
+	if err != nil {
+		return err
+	}
+	sct, err := DBW.SQLC.CountSchools(ctx)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("\n%s:\n", app.Network.Name)
+	fmt.Printf("\nPeople Records: %d\n", pct)
+	fmt.Printf("Company Records: %d\n", cct)
+	fmt.Printf("School Records: %d\n", sct)
+
+	return nil
+}
+
+func (app *App) DispatchAction(ctx context.Context, dbw *dbw.DBW, act string) error {
+	switch action.APP_ACTION(act) {
+	case action.UPDATE_CONNECTIONS:
+		if app.User.ApifyToken == nil {
+			token, err := user.UpdateApifyToken(ctx, dbw, app.User.ID)
+			if err != nil {
+				return err
+			}
+			app.User.ApifyToken = token
+		}
+		if err := action.ActionUpdateConnections(ctx, dbw, *app.User.ApifyToken, app.Network.ID); err != nil {
+			return err
+		}
+	case action.SEARCH:
+		fmt.Println("Search is currently disabled")
+		return nil
+	case action.UPDATE_APIFY:
+		token, err := user.UpdateApifyToken(ctx, dbw, app.User.ID)
+		if err != nil {
+			return err
+		}
+		app.User.ApifyToken = token
+		return nil
+	case action.QUIT:
+		os.Exit(0)
+	}
+	fmt.Println()
+	return nil
+}
+
+func (app *App) GetOrCreateUser(ctx context.Context, DBW *dbw.DBW) error {
 	ct, err := DBW.SQLC.CountUsers(ctx)
 	if err != nil {
 		return fmt.Errorf("CountUsers %w", err)
@@ -91,8 +158,8 @@ func GetOrCreateUser(ctx context.Context, DBW *dbw.DBW, state *util.State) error
 				return err
 			}
 
-			state.User = &user
-			state.Network = &network
+			app.User = &user
+			app.Network = &network
 		} else {
 			user, err := DBW.SQLC.SelectUser(ctx, username)
 			if err != nil {
@@ -115,40 +182,10 @@ func GetOrCreateUser(ctx context.Context, DBW *dbw.DBW, state *util.State) error
 				return err
 			}
 
-			state.User = &user
-			state.Network = &network
+			app.User = &user
+			app.Network = &network
 		}
 		authed = true
-	}
-
-	return nil
-}
-
-func UpdateApifyToken(ctx context.Context, DBW *dbw.DBW, state *util.State) error {
-	for state.User.ApifyToken == nil {
-		fmt.Print("\nSet Apify API token: ")
-
-		reader := bufio.NewReader(os.Stdin)
-		token, _ := reader.ReadString('\n')
-		token = strings.TrimSpace(token)
-
-		if token == "" {
-			fmt.Println("Apify API token cannot be empty")
-			continue
-		}
-
-		// validate token format?
-
-		err := DBW.SQLC.UpdateUserApifyToken(ctx, model.UpdateUserApifyTokenParams{
-			ID:         state.User.ID,
-			ApifyToken: &token,
-		})
-		if err != nil {
-			return err
-		}
-
-		fmt.Println("Apify API token saved")
-		state.User.ApifyToken = &token
 	}
 
 	return nil

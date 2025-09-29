@@ -1,6 +1,9 @@
+-- name: SelectOrganizationsByLinkedinURLs :many
+SELECT id, profile_url FROM organizations WHERE profile_url IN (sqlc.slice(linkedin_urls));
+
 -- name: InsertOrganization :exec
 INSERT INTO organizations
-(id, "name", universal_name, website, linkedin_url, logo_url, founded_year, founded_month, organization_type, employee_count, student_count, urn, created_at)
+(id, "name", universal_name, website, profile_url, logo_url, founded_year, founded_month, organization_type, employee_count, student_count, urn, created_at)
 VALUES
 (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 

@@ -3,15 +3,15 @@ package main
 import (
 	"bufio"
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"strings"
 
-	"github.com/c-malecki/lina/internal/action"
+	"github.com/c-malecki/lina/internal/app"
 	"github.com/c-malecki/lina/internal/dbw"
-	"github.com/c-malecki/lina/internal/util"
 )
+
+// todo: error handling with logging and friendly user message
 
 func main() {
 	ctx := context.Background()
@@ -20,50 +20,28 @@ func main() {
 		log.Fatal(err)
 	}
 
-	state := &util.State{}
+	APP := &app.App{}
 
-	err = action.GetOrCreateUser(ctx, DBW, state)
+	err = APP.GetOrCreateUser(ctx, DBW)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for {
-		err := action.ShowStats(ctx, DBW, state)
+		err := APP.PrintNetworkStats(ctx, DBW)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		action.ShowOptions()
+		APP.PrintActions()
 
 		reader := bufio.NewReader(os.Stdin)
-		opt, _ := reader.ReadString('\n')
-		opt = strings.TrimSpace(opt)
+		act, _ := reader.ReadString('\n')
+		act = strings.TrimSpace(act)
 
-		switch opt {
-		case "1":
-			if state.User.ApifyToken == nil {
-				err = action.UpdateApifyToken(ctx, DBW, state)
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
-			urls, err := action.ParseLinkedinCsv()
-			if err != nil {
-				log.Fatal(err)
-			}
-			err = action.ProceedWithEnrichment(ctx, DBW, state, urls)
-			if err != nil {
-				log.Fatal(err)
-			}
-		case "2":
-			fmt.Println("Search is currently disabled")
-		case "3":
-
-		case "4":
-			return
-		default:
-			fmt.Println("Invalid option")
+		err = APP.DispatchAction(ctx, DBW, act)
+		if err != nil {
+			log.Fatal(err)
 		}
-		fmt.Println()
 	}
 }
