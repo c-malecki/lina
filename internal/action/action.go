@@ -1,12 +1,5 @@
 package action
 
-import (
-	"context"
-
-	"github.com/c-malecki/lina/internal/action/network"
-	"github.com/c-malecki/lina/internal/dbw"
-)
-
 type APP_ACTION string
 
 const (
@@ -29,22 +22,4 @@ func (aa APP_ACTION) String() string {
 	default:
 		return "Invalid Option"
 	}
-}
-
-func ActionUpdateConnections(ctx context.Context, dbw *dbw.DBW, token string, networkId int64) error {
-	urls, err := network.ParseLinkedinCsv()
-	if err != nil {
-		return err
-	}
-
-	newUrls, err := network.CompareConnections(ctx, dbw, networkId, urls)
-	if err != nil {
-		return err
-	}
-
-	if len(newUrls) == 0 {
-		return nil
-	}
-
-	return nil
 }

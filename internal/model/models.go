@@ -4,6 +4,12 @@
 
 package model
 
+type Connections struct {
+	ID        int64 `db:"id"`
+	NetworkID int64 `db:"network_id"`
+	PersonID  int64 `db:"person_id"`
+}
+
 type DatasetDegrees struct {
 	ID   int64  `db:"id"`
 	Name string `db:"name"`
@@ -62,12 +68,6 @@ type Experiences struct {
 	EndYear        *int64  `db:"end_year"`
 	EndMonth       *int64  `db:"end_month"`
 	SkillsUrl      *string `db:"skills_url"`
-}
-
-type NetworkConnections struct {
-	ID        int64 `db:"id"`
-	NetworkID int64 `db:"network_id"`
-	PersonID  int64 `db:"person_id"`
 }
 
 type Networks struct {
@@ -134,6 +134,13 @@ type Persons struct {
 	UpdatedAt         *int64  `db:"updated_at"`
 }
 
+type TmpConnections struct {
+	ID         int64  `db:"id"`
+	NetworkID  int64  `db:"network_id"`
+	ProfileUrl string `db:"profile_url"`
+	PersonID   *int64 `db:"person_id"`
+}
+
 type TmpDatasetDegrees struct {
 	ID   int64  `db:"id"`
 	Name string `db:"name"`
@@ -192,12 +199,6 @@ type TmpExperiences struct {
 	EndYear         *int64  `db:"end_year"`
 	EndMonth        *int64  `db:"end_month"`
 	SkillsUrl       *string `db:"skills_url"`
-}
-
-type TmpNetworkConnections struct {
-	ID        int64 `db:"id"`
-	NetworkID int64 `db:"network_id"`
-	PersonID  int64 `db:"person_id"`
 }
 
 type TmpOrganizationIndustries struct {

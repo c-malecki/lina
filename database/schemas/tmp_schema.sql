@@ -1,3 +1,63 @@
+-- name: CreateTmpConnectionsTable :exec
+CREATE TEMPORARY TABLE IF NOT EXISTS tmp_connections (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  network_id INTEGER NOT NULL,
+  profile_url TEXT NOT NULL,
+  person_id INTEGER
+);
+
+-- name: CreateTmpPersonsTable :exec
+CREATE TEMPORARY TABLE IF NOT EXISTS tmp_persons (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  headline TEXT,
+  profile_url TEXT NOT NULL,
+  public_identifier TEXT NOT NULL,
+  profile_picture_url TEXT,
+  about TEXT,
+  "location" TEXT,
+  urn TEXT NOT NULL UNIQUE,
+  created_at INTEGER NOT NULL
+);
+
+-- name: CreateTmpPersonSkillsTable :exec
+CREATE TEMPORARY TABLE IF NOT EXISTS tmp_person_skills (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  person_urn TEXT NOT NULL,
+  skill TEXT NOT NULL,
+  UNIQUE (person_id, skill_id)
+);
+
+-- name: CreateTmpExperiencesTable :exec
+CREATE TEMPORARY TABLE IF NOT EXISTS tmp_experiences (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  person_urn TEXT NOT NULL,
+  organization_urn TEXT NOT NULL,
+  title TEXT NOT NULL,
+  location_raw TEXT,
+  "description" TEXT,
+  start_year INTEGER,
+  start_month INTEGER,
+  is_current INTEGER NOT NULL,
+  end_year INTEGER,
+  end_month INTEGER,
+  skills_url TEXT
+);
+
+-- name: CreateTmpEducationsTable :exec
+CREATE TEMPORARY TABLE IF NOT EXISTS tmp_educations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  person_urn TEXT NOT NULL,
+  organization_urn TEXT NOT NULL,
+  degree TEXT,
+  study_field TEXT,
+  start_year INTEGER,
+  start_month INTEGER,
+  end_year INTEGER,
+  end_month INTEGER
+);
+
 -- name: CreateTmpDatasetDegreesTable :exec
 CREATE TEMPORARY TABLE IF NOT EXISTS tmp_dataset_degrees (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -78,64 +138,4 @@ CREATE TEMPORARY TABLE IF NOT EXISTS tmp_organization_industries (
   organization_urn TEXT NOT NULL,
   industry TEXT NOT NULL,
   UNIQUE (organization_urn, industry)
-);
-
--- name: CreateTmpPersonsTable :exec
-CREATE TEMPORARY TABLE IF NOT EXISTS tmp_persons (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  first_name TEXT NOT NULL,
-  last_name TEXT NOT NULL,
-  headline TEXT,
-  profile_url TEXT NOT NULL,
-  public_identifier TEXT NOT NULL,
-  profile_picture_url TEXT,
-  about TEXT,
-  "location" TEXT,
-  urn TEXT NOT NULL UNIQUE,
-  created_at INTEGER NOT NULL
-);
-
--- name: CreateTmpPersonSkillsTable :exec
-CREATE TEMPORARY TABLE IF NOT EXISTS tmp_person_skills (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  person_urn TEXT NOT NULL,
-  skill TEXT NOT NULL,
-  UNIQUE (person_id, skill_id)
-);
-
--- name: CreateTmpNetworkConnectionsTable :exec
-CREATE TEMPORARY TABLE IF NOT EXISTS tmp_network_connections (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  network_id INTEGER NOT NULL,
-  person_id INTEGER NOT NULL,
-  UNIQUE (network_id, person_id)
-);
-
--- name: CreateTmpExperiencesTable :exec
-CREATE TEMPORARY TABLE IF NOT EXISTS tmp_experiences (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  person_urn TEXT NOT NULL,
-  organization_urn TEXT NOT NULL,
-  title TEXT NOT NULL,
-  location_raw TEXT,
-  "description" TEXT,
-  start_year INTEGER,
-  start_month INTEGER,
-  is_current INTEGER NOT NULL,
-  end_year INTEGER,
-  end_month INTEGER,
-  skills_url TEXT
-);
-
--- name: CreateTmpEducationsTable :exec
-CREATE TEMPORARY TABLE IF NOT EXISTS tmp_educations (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  person_urn TEXT NOT NULL,
-  organization_urn TEXT NOT NULL,
-  degree TEXT,
-  study_field TEXT,
-  start_year INTEGER,
-  start_month INTEGER,
-  end_year INTEGER,
-  end_month INTEGER
 );

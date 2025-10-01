@@ -20,7 +20,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	APP := &app.App{}
+	APP := &app.App{
+		DBW: DBW,
+	}
 
 	err = APP.GetOrCreateUser(ctx, DBW)
 	if err != nil {

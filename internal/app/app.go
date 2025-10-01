@@ -13,12 +13,15 @@ import (
 	"github.com/c-malecki/lina/internal/action/user"
 	"github.com/c-malecki/lina/internal/dbw"
 	"github.com/c-malecki/lina/internal/model"
+	"github.com/c-malecki/lina/pipeline/connection"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type App struct {
-	User    *model.Users
-	Network *model.Networks
+	User          *model.Users
+	Network       *model.Networks
+	CurrentAction action.APP_ACTION
+	DBW           *dbw.DBW
 }
 
 func (app *App) PrintActions() {
@@ -55,6 +58,7 @@ func (app *App) PrintNetworkStats(ctx context.Context, DBW *dbw.DBW) error {
 func (app *App) DispatchAction(ctx context.Context, dbw *dbw.DBW, act string) error {
 	switch action.APP_ACTION(act) {
 	case action.UPDATE_CONNECTIONS:
+		app.CurrentAction = action.UPDATE_CONNECTIONS
 		if app.User.ApifyToken == nil {
 			token, err := user.UpdateApifyToken(ctx, dbw, app.User.ID)
 			if err != nil {
@@ -62,9 +66,7 @@ func (app *App) DispatchAction(ctx context.Context, dbw *dbw.DBW, act string) er
 			}
 			app.User.ApifyToken = token
 		}
-		if err := action.ActionUpdateConnections(ctx, dbw, *app.User.ApifyToken, app.Network.ID); err != nil {
-			return err
-		}
+		connection.InitConnectionPipeline(app.User, app.Network, app.DBW)
 	case action.SEARCH:
 		fmt.Println("Search is currently disabled")
 		return nil

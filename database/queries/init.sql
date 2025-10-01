@@ -134,8 +134,8 @@ CREATE TABLE IF NOT EXISTS networks (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- name: CreateNetworkConnectionsTable :exec
-CREATE TABLE IF NOT EXISTS network_connections (
+-- name: CreateConnectionsTable :exec
+CREATE TABLE IF NOT EXISTS connections (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   network_id INTEGER NOT NULL,
   person_id INTEGER NOT NULL,

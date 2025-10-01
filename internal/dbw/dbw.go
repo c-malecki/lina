@@ -16,53 +16,6 @@ type DBW struct {
 	SQLC *model.Queries
 }
 
-type Seq struct {
-	Name string `db:"name"`
-	Seq  int64  `db:"seq"`
-}
-
-type IDSequenceMap map[string]int64
-
-var seqsMap = map[string]int64{
-	"dataset_degrees":      0,
-	"dataset_industries":   0,
-	"dataset_locations":    0,
-	"dataset_skills":       0,
-	"dataset_specialties":  0,
-	"dataset_study_fields": 0,
-	"educations":           0,
-	"experiences":          0,
-	"organizations":        0,
-	"persons":              0,
-}
-
-func (dbw *DBW) QuerySeqs(ctx context.Context) (IDSequenceMap, error) {
-	rows, err := dbw.DB.QueryContext(ctx, `select * from sqlite_sequence;`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := seqsMap
-	for rows.Next() {
-		var i Seq
-		if err := rows.Scan(
-			&i.Name,
-			&i.Seq,
-		); err != nil {
-			return nil, err
-		}
-		items[i.Name] = i.Seq
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return items, nil
-}
-
 func InitDB(ctx context.Context) (*DBW, error) {
 	path, err := os.Executable()
 	if err != nil {
@@ -100,18 +53,22 @@ func InitDB(ctx context.Context) (*DBW, error) {
 	if err != nil {
 		return nil, fmt.Errorf("qtx.CreateUsersTable %w", err)
 	}
+
 	err = qtx.CreateDatasetDegreesTable(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("qtx.CreateDatasetDegreesTable %w", err)
 	}
+
 	err = qtx.CreateDatasetIndustriesTable(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("qtx.CreateDatasetIndustriesTable %w", err)
 	}
+
 	err = qtx.CreateDatasetLocationsTable(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("qtx.CreateDatasetLocationsTable %w", err)
 	}
+
 	err = qtx.CreateDatasetSkillsTable(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("qtx.CreateDatasetSkillsTable %w", err)
@@ -120,10 +77,12 @@ func InitDB(ctx context.Context) (*DBW, error) {
 	if err != nil {
 		return nil, fmt.Errorf("qtx.CreateDatasetSpecialtiesTable %w", err)
 	}
+
 	err = qtx.CreateDatasetStudyFieldsTable(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("qtx.CreateDatasetStudyFieldsTable %w", err)
 	}
+
 	err = qtx.CreateOrganizationsTable(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("qtx.CreateOrganizationsTable %w", err)
@@ -132,18 +91,22 @@ func InitDB(ctx context.Context) (*DBW, error) {
 	if err != nil {
 		return nil, fmt.Errorf("tx.Exec CREATE organizations indexes %w", err)
 	}
+
 	err = qtx.CreateOrganizationLocationsTable(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("qtx.CreateOrganizationLocationsTable %w", err)
 	}
+
 	err = qtx.CreateOrganizationSpecialtiesTable(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("qtx.CreateOrganizationSpecialtiesTable %w", err)
 	}
+
 	err = qtx.CreateOrganizationIndustriesTable(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("qtx.CreateOrganizationIndustriesTable %w", err)
 	}
+
 	err = qtx.CreatePersonsTable(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("qtx.CreatePersonsTable %w", err)
@@ -155,18 +118,22 @@ func InitDB(ctx context.Context) (*DBW, error) {
 	if err != nil {
 		return nil, fmt.Errorf("tx.Exec CREATE persons indexes %w", err)
 	}
+
 	err = qtx.CreatePersonSkillsTable(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("qtx.CreatePersonSkillsTable %w", err)
 	}
+
 	err = qtx.CreateNetworksTable(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("qtx.CreateNetworksTable %w", err)
 	}
-	err = qtx.CreateNetworkConnectionsTable(ctx)
+
+	err = qtx.CreateConnectionsTable(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("qtx.CreateNetworkConnectionsTable %w", err)
+		return nil, fmt.Errorf("qtx.CreateConnectionsTable %w", err)
 	}
+
 	err = qtx.CreateExperiencesTable(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("qtx.CreateExperiencesTable %w", err)
@@ -179,6 +146,7 @@ func InitDB(ctx context.Context) (*DBW, error) {
 	if err != nil {
 		return nil, fmt.Errorf("tx.Exec CREATE experiences indexes %w", err)
 	}
+
 	err = qtx.CreateEducationsTable(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("qtx.CreateEducationsTable %w", err)
@@ -199,3 +167,50 @@ func InitDB(ctx context.Context) (*DBW, error) {
 
 	return dbw, nil
 }
+
+// type Seq struct {
+// 	Name string `db:"name"`
+// 	Seq  int64  `db:"seq"`
+// }
+
+// type IDSequenceMap map[string]int64
+
+// var seqsMap = map[string]int64{
+// 	"dataset_degrees":      0,
+// 	"dataset_industries":   0,
+// 	"dataset_locations":    0,
+// 	"dataset_skills":       0,
+// 	"dataset_specialties":  0,
+// 	"dataset_study_fields": 0,
+// 	"educations":           0,
+// 	"experiences":          0,
+// 	"organizations":        0,
+// 	"persons":              0,
+// }
+
+// func (dbw *DBW) QuerySeqs(ctx context.Context) (IDSequenceMap, error) {
+// 	rows, err := dbw.DB.QueryContext(ctx, `select * from sqlite_sequence;`)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer rows.Close()
+// 	items := seqsMap
+// 	for rows.Next() {
+// 		var i Seq
+// 		if err := rows.Scan(
+// 			&i.Name,
+// 			&i.Seq,
+// 		); err != nil {
+// 			return nil, err
+// 		}
+// 		items[i.Name] = i.Seq
+// 	}
+// 	if err := rows.Close(); err != nil {
+// 		return nil, err
+// 	}
+// 	if err := rows.Err(); err != nil {
+// 		return nil, err
+// 	}
+
+// 	return items, nil
+// }

@@ -9,6 +9,22 @@ import (
 	"context"
 )
 
+const CreateConnectionsTable = `-- name: CreateConnectionsTable :exec
+CREATE TABLE IF NOT EXISTS connections (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  network_id INTEGER NOT NULL,
+  person_id INTEGER NOT NULL,
+  UNIQUE (network_id, person_id),
+  FOREIGN KEY (network_id) REFERENCES networks(id) ON DELETE CASCADE,
+  FOREIGN KEY (person_id) REFERENCES persons(id) ON DELETE CASCADE
+)
+`
+
+func (q *Queries) CreateConnectionsTable(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, CreateConnectionsTable)
+	return err
+}
+
 const CreateDatasetDegreesTable = `-- name: CreateDatasetDegreesTable :exec
 CREATE TABLE IF NOT EXISTS dataset_degrees (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -129,22 +145,6 @@ CREATE TABLE IF NOT EXISTS experiences (
 
 func (q *Queries) CreateExperiencesTable(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, CreateExperiencesTable)
-	return err
-}
-
-const CreateNetworkConnectionsTable = `-- name: CreateNetworkConnectionsTable :exec
-CREATE TABLE IF NOT EXISTS network_connections (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  network_id INTEGER NOT NULL,
-  person_id INTEGER NOT NULL,
-  UNIQUE (network_id, person_id),
-  FOREIGN KEY (network_id) REFERENCES networks(id) ON DELETE CASCADE,
-  FOREIGN KEY (person_id) REFERENCES persons(id) ON DELETE CASCADE
-)
-`
-
-func (q *Queries) CreateNetworkConnectionsTable(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, CreateNetworkConnectionsTable)
 	return err
 }
 

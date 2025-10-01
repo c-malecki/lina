@@ -7,7 +7,6 @@ package model
 
 import (
 	"context"
-	"strings"
 )
 
 const InsertPerson = `-- name: InsertPerson :exec
@@ -44,46 +43,4 @@ func (q *Queries) InsertPerson(ctx context.Context, arg InsertPersonParams) erro
 		arg.CreatedAt,
 	)
 	return err
-}
-
-const SelectPersonsByLinkedinURLs = `-- name: SelectPersonsByLinkedinURLs :many
-SELECT id, profile_url FROM persons WHERE profile_url IN (/*SLICE:linkedin_urls*/?)
-`
-
-type SelectPersonsByLinkedinURLsRow struct {
-	ID         int64  `db:"id"`
-	ProfileUrl string `db:"profile_url"`
-}
-
-func (q *Queries) SelectPersonsByLinkedinURLs(ctx context.Context, linkedinUrls []string) ([]SelectPersonsByLinkedinURLsRow, error) {
-	query := SelectPersonsByLinkedinURLs
-	var queryParams []interface{}
-	if len(linkedinUrls) > 0 {
-		for _, v := range linkedinUrls {
-			queryParams = append(queryParams, v)
-		}
-		query = strings.Replace(query, "/*SLICE:linkedin_urls*/?", strings.Repeat(",?", len(linkedinUrls))[1:], 1)
-	} else {
-		query = strings.Replace(query, "/*SLICE:linkedin_urls*/?", "NULL", 1)
-	}
-	rows, err := q.db.QueryContext(ctx, query, queryParams...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []SelectPersonsByLinkedinURLsRow{}
-	for rows.Next() {
-		var i SelectPersonsByLinkedinURLsRow
-		if err := rows.Scan(&i.ID, &i.ProfileUrl); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }

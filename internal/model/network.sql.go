@@ -9,6 +9,23 @@ import (
 	"context"
 )
 
+const InsertConnection = `-- name: InsertConnection :exec
+INSERT INTO connections
+(network_id, person_id)
+VALUES
+(?, ?)
+`
+
+type InsertConnectionParams struct {
+	NetworkID int64 `db:"network_id"`
+	PersonID  int64 `db:"person_id"`
+}
+
+func (q *Queries) InsertConnection(ctx context.Context, arg InsertConnectionParams) error {
+	_, err := q.db.ExecContext(ctx, InsertConnection, arg.NetworkID, arg.PersonID)
+	return err
+}
+
 const InsertNetwork = `-- name: InsertNetwork :exec
 INSERT INTO networks (user_id, "name") VALUES (?, ?)
 `
@@ -20,23 +37,6 @@ type InsertNetworkParams struct {
 
 func (q *Queries) InsertNetwork(ctx context.Context, arg InsertNetworkParams) error {
 	_, err := q.db.ExecContext(ctx, InsertNetwork, arg.UserID, arg.Name)
-	return err
-}
-
-const InsertNetworkConnection = `-- name: InsertNetworkConnection :exec
-INSERT INTO network_connections
-(network_id, person_id)
-VALUES
-(?, ?)
-`
-
-type InsertNetworkConnectionParams struct {
-	NetworkID int64 `db:"network_id"`
-	PersonID  int64 `db:"person_id"`
-}
-
-func (q *Queries) InsertNetworkConnection(ctx context.Context, arg InsertNetworkConnectionParams) error {
-	_, err := q.db.ExecContext(ctx, InsertNetworkConnection, arg.NetworkID, arg.PersonID)
 	return err
 }
 
@@ -94,27 +94,27 @@ func (q *Queries) SelectNetworks(ctx context.Context, arg SelectNetworksParams) 
 	return items, nil
 }
 
-const SelectPersonsByNetworkConnections = `-- name: SelectPersonsByNetworkConnections :many
+const SelectPersonsByConnections = `-- name: SelectPersonsByConnections :many
 SELECT p.id, p.profile_url
-FROM network_connections nc
+FROM connections nc
 INNER JOIN persons p ON p.id = nc.person_id
 WHERE network_id = ?
 `
 
-type SelectPersonsByNetworkConnectionsRow struct {
+type SelectPersonsByConnectionsRow struct {
 	ID         int64  `db:"id"`
 	ProfileUrl string `db:"profile_url"`
 }
 
-func (q *Queries) SelectPersonsByNetworkConnections(ctx context.Context, networkID int64) ([]SelectPersonsByNetworkConnectionsRow, error) {
-	rows, err := q.db.QueryContext(ctx, SelectPersonsByNetworkConnections, networkID)
+func (q *Queries) SelectPersonsByConnections(ctx context.Context, networkID int64) ([]SelectPersonsByConnectionsRow, error) {
+	rows, err := q.db.QueryContext(ctx, SelectPersonsByConnections, networkID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []SelectPersonsByNetworkConnectionsRow{}
+	items := []SelectPersonsByConnectionsRow{}
 	for rows.Next() {
-		var i SelectPersonsByNetworkConnectionsRow
+		var i SelectPersonsByConnectionsRow
 		if err := rows.Scan(&i.ID, &i.ProfileUrl); err != nil {
 			return nil, err
 		}
