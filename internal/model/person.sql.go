@@ -9,6 +9,28 @@ import (
 	"context"
 )
 
+const CountPersonSkills = `-- name: CountPersonSkills :one
+SELECT COUNT(*) FROM person_skills
+`
+
+func (q *Queries) CountPersonSkills(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountPersonSkills)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountPersons = `-- name: CountPersons :one
+SELECT COUNT(*) FROM persons
+`
+
+func (q *Queries) CountPersons(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountPersons)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const InsertPerson = `-- name: InsertPerson :exec
 INSERT INTO persons
 (first_name, last_name, headline, profile_url, public_identifier, profile_picture_url, about, location_id, urn, created_at)

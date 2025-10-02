@@ -67,9 +67,11 @@ func (app *App) DispatchAction(ctx context.Context, dbw *dbw.DBW, act string) er
 			app.User.ApifyToken = token
 		}
 		connection.InitConnectionPipeline(app.User, app.Network, app.DBW)
+
 	case action.SEARCH:
 		fmt.Println("Search is currently disabled")
 		return nil
+
 	case action.UPDATE_APIFY:
 		token, err := user.UpdateApifyToken(ctx, dbw, app.User.ID)
 		if err != nil {
@@ -77,15 +79,19 @@ func (app *App) DispatchAction(ctx context.Context, dbw *dbw.DBW, act string) er
 		}
 		app.User.ApifyToken = token
 		return nil
+
 	case action.QUIT:
 		os.Exit(0)
+
+	default:
+		fmt.Printf("\n%s is not a valid selection\n", act)
 	}
 	fmt.Println()
 	return nil
 }
 
-func (app *App) GetOrCreateUser(ctx context.Context, DBW *dbw.DBW) error {
-	ct, err := DBW.SQLC.CountUsers(ctx)
+func (app *App) GetOrCreateUser(ctx context.Context) error {
+	ct, err := app.DBW.SQLC.CountUsers(ctx)
 	if err != nil {
 		return fmt.Errorf("CountUsers %w", err)
 	}
@@ -128,7 +134,7 @@ func (app *App) GetOrCreateUser(ctx context.Context, DBW *dbw.DBW) error {
 				return err
 			}
 
-			err = DBW.SQLC.InsertUser(ctx, model.InsertUserParams{
+			err = app.DBW.SQLC.InsertUser(ctx, model.InsertUserParams{
 				Username:  username,
 				Password:  string(hash),
 				CreatedAt: time.Now().Unix(),
@@ -137,7 +143,7 @@ func (app *App) GetOrCreateUser(ctx context.Context, DBW *dbw.DBW) error {
 				return err
 			}
 
-			user, err := DBW.SQLC.SelectUser(ctx, username)
+			user, err := app.DBW.SQLC.SelectUser(ctx, username)
 			if err != nil {
 				if err == sql.ErrNoRows {
 					fmt.Println("user does not exist")
@@ -147,7 +153,7 @@ func (app *App) GetOrCreateUser(ctx context.Context, DBW *dbw.DBW) error {
 				}
 			}
 
-			err = DBW.SQLC.InsertNetwork(ctx, model.InsertNetworkParams{
+			err = app.DBW.SQLC.InsertNetwork(ctx, model.InsertNetworkParams{
 				UserID: user.ID,
 				Name:   username + "'s network",
 			})
@@ -155,7 +161,7 @@ func (app *App) GetOrCreateUser(ctx context.Context, DBW *dbw.DBW) error {
 				return err
 			}
 
-			network, err := DBW.SQLC.SelectNetworkByUserID(ctx, user.ID)
+			network, err := app.DBW.SQLC.SelectNetworkByUserID(ctx, user.ID)
 			if err != nil {
 				return err
 			}
@@ -163,7 +169,7 @@ func (app *App) GetOrCreateUser(ctx context.Context, DBW *dbw.DBW) error {
 			app.User = &user
 			app.Network = &network
 		} else {
-			user, err := DBW.SQLC.SelectUser(ctx, username)
+			user, err := app.DBW.SQLC.SelectUser(ctx, username)
 			if err != nil {
 				if err == sql.ErrNoRows {
 					fmt.Println("user does not exist")
@@ -179,7 +185,7 @@ func (app *App) GetOrCreateUser(ctx context.Context, DBW *dbw.DBW) error {
 				continue
 			}
 
-			network, err := DBW.SQLC.SelectNetworkByUserID(ctx, user.ID)
+			network, err := app.DBW.SQLC.SelectNetworkByUserID(ctx, user.ID)
 			if err != nil {
 				return err
 			}

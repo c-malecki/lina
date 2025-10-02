@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/c-malecki/lina/internal/dbw"
 	"github.com/c-malecki/lina/pipeline"
 )
 
@@ -12,7 +13,7 @@ type DataPhase struct {
 	startTime time.Time
 	endTime   time.Time
 	pipeline  *ConnectionPipeline
-	next      *NetworkPhase
+	next      pipeline.Phase
 }
 
 func (p *DataPhase) Ended(err error) {
@@ -22,32 +23,38 @@ func (p *DataPhase) Ended(err error) {
 	}
 }
 
+func (p *DataPhase) Next() pipeline.Phase {
+	return p.next
+}
+
 func (p *DataPhase) Start(ctx context.Context) {
 	p.startTime = time.Now()
 	p.pipeline.SetCurrent(p)
 
-	if err := p.InsertDatasetDataFromTmp(ctx); err != nil {
+	if err := insertDatasetDataFromTmp(ctx, p.pipeline.dbw); err != nil {
 		p.Ended(err)
 		return
 	}
 
-	if err := p.InsertOrganizationDataFromTmp(ctx); err != nil {
+	if err := insertOrganizationDataFromTmp(ctx, p.pipeline.dbw); err != nil {
 		p.Ended(err)
 		return
 	}
 
-	if err := p.InsertPersonDataFromTmp(ctx); err != nil {
+	if err := insertPersonDataFromTmp(ctx, p.pipeline.dbw); err != nil {
 		p.Ended(err)
 		return
 	}
+
+	p.next.Start(ctx)
 }
 
-func (p *DataPhase) InsertDatasetDataFromTmp(ctx context.Context) error {
-	tx, err := p.pipeline.dbw.DB.BeginTx(ctx, nil)
+func insertDatasetDataFromTmp(ctx context.Context, dbw *dbw.DBW) error {
+	tx, err := dbw.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("BeginTx %w", err)
 	}
-	qtx := p.pipeline.dbw.SQLC.WithTx(tx)
+	qtx := dbw.SQLC.WithTx(tx)
 
 	err = qtx.InsertDatasetDegreesFromTmp(ctx)
 	if err != nil {
@@ -87,12 +94,12 @@ func (p *DataPhase) InsertDatasetDataFromTmp(ctx context.Context) error {
 	return nil
 }
 
-func (p *DataPhase) InsertOrganizationDataFromTmp(ctx context.Context) error {
-	tx, err := p.pipeline.dbw.DB.BeginTx(ctx, nil)
+func insertOrganizationDataFromTmp(ctx context.Context, dbw *dbw.DBW) error {
+	tx, err := dbw.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("BeginTx %w", err)
 	}
-	qtx := p.pipeline.dbw.SQLC.WithTx(tx)
+	qtx := dbw.SQLC.WithTx(tx)
 
 	err = qtx.InsertOrganizationsFromTmp(ctx)
 	if err != nil {
@@ -122,12 +129,12 @@ func (p *DataPhase) InsertOrganizationDataFromTmp(ctx context.Context) error {
 	return nil
 }
 
-func (p *DataPhase) InsertPersonDataFromTmp(ctx context.Context) error {
-	tx, err := p.pipeline.dbw.DB.BeginTx(ctx, nil)
+func insertPersonDataFromTmp(ctx context.Context, dbw *dbw.DBW) error {
+	tx, err := dbw.DB.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("BeginTx %w", err)
 	}
-	qtx := p.pipeline.dbw.SQLC.WithTx(tx)
+	qtx := dbw.SQLC.WithTx(tx)
 
 	err = qtx.InsertPersonsFromTmp(ctx)
 	if err != nil {

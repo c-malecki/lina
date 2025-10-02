@@ -18,3 +18,6 @@ INSERT INTO connections
 (network_id, person_id)
 VALUES
 (?, ?);
+
+-- name: CountConnectionsByNetworkID :one
+SELECT COUNT(*) FROM connections WHERE network_id = ?;

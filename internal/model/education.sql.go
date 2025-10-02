@@ -9,6 +9,17 @@ import (
 	"context"
 )
 
+const CountEducations = `-- name: CountEducations :one
+SELECT COUNT(*) FROM educations
+`
+
+func (q *Queries) CountEducations(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountEducations)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const InsertEducation = `-- name: InsertEducation :exec
 INSERT INTO educations
 (person_id, organization_id, degree_id, study_field_id, start_year, start_month, end_year, end_month)

@@ -3,3 +3,9 @@ INSERT INTO persons
 (first_name, last_name, headline, profile_url, public_identifier, profile_picture_url, about, location_id, urn, created_at)
 VALUES
 (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- name: CountPersons :one
+SELECT COUNT(*) FROM persons;
+
+-- name: CountPersonSkills :one
+SELECT COUNT(*) FROM person_skills;

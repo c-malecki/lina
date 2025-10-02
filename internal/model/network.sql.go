@@ -9,6 +9,17 @@ import (
 	"context"
 )
 
+const CountConnectionsByNetworkID = `-- name: CountConnectionsByNetworkID :one
+SELECT COUNT(*) FROM connections WHERE network_id = ?
+`
+
+func (q *Queries) CountConnectionsByNetworkID(ctx context.Context, networkID int64) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountConnectionsByNetworkID, networkID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const InsertConnection = `-- name: InsertConnection :exec
 INSERT INTO connections
 (network_id, person_id)

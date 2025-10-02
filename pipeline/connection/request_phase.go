@@ -3,24 +3,26 @@ package connection
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/c-malecki/go-utils/database"
 	"github.com/c-malecki/lina/internal/apify"
+	"github.com/c-malecki/lina/internal/dbw"
 	"github.com/c-malecki/lina/internal/model"
 	"github.com/c-malecki/lina/pipeline"
 )
 
 type extracted struct {
 	persons        []model.InsertTmpPersonParams
-	personSkills   []model.InsertTmpPersonSkillParams
+	personSkills   map[string][]string
 	experiences    []model.InsertTmpExperienceParams
 	educations     []model.InsertTmpEducationParams
 	organizations  []model.InsertTmpOrganizationParams
-	orgLocations   []model.InsertTmpOrganizationLocationParams
-	orgIndustries  []model.InsertTmpOrganizationIndustryParams
-	orgSpecialties []model.InsertTmpOrganizationSpecialtyParams
+	orgLocations   map[string][]model.InsertTmpOrganizationLocationParams
+	orgIndustries  map[string][]string
+	orgSpecialties map[string][]string
 }
 
 type aggregated struct {
@@ -37,7 +39,7 @@ type RequestPhase struct {
 	startTime time.Time
 	endTime   time.Time
 	pipeline  *ConnectionPipeline
-	next      *DataPhase
+	next      pipeline.Phase
 }
 
 func (p *RequestPhase) Ended(err error) {
@@ -45,6 +47,10 @@ func (p *RequestPhase) Ended(err error) {
 	if err != nil {
 		p.pipeline.End(pipeline.FAILED)
 	}
+}
+
+func (p *RequestPhase) Next() pipeline.Phase {
+	return p.next
 }
 
 func (p *RequestPhase) Start(ctx context.Context) {
@@ -58,9 +64,9 @@ func (p *RequestPhase) Start(ctx context.Context) {
 	}
 
 	if len(newPersonUrls) == 0 {
-		// skip to data phase
+		// skip to network phase
 		p.Ended(nil)
-		p.next.Start(ctx)
+		p.next.Next().Start(ctx)
 		return
 	}
 
@@ -73,26 +79,39 @@ func (p *RequestPhase) Start(ctx context.Context) {
 	}
 
 	if len(personResults) == 0 {
-		// skip to data phase
+		// skip to network phase
 		p.Ended(nil)
-		p.next.Start(ctx)
+		p.next.Next().Start(ctx)
 		return
 	}
 
-	extracted := &extracted{}
-	aggregated := &aggregated{}
+	extracted := &extracted{
+		personSkills:   make(map[string][]string),
+		orgIndustries:  make(map[string][]string),
+		orgSpecialties: make(map[string][]string),
+		orgLocations:   make(map[string][]model.InsertTmpOrganizationLocationParams),
+	}
+	aggregated := &aggregated{
+		organizationUrls: make(map[string]string),
+		locations:        make(map[string]model.InsertTmpDatasetLocationParams),
+		skills:           make(map[string]struct{}),
+		degrees:          make(map[string]struct{}),
+		studyFields:      make(map[string]struct{}),
+		specialties:      make(map[string]struct{}),
+		industries:       make(map[string]struct{}),
+	}
 
 	for _, v := range personResults {
-		p.extractPerson(v, extracted, aggregated)
+		extractPerson(v, extracted, aggregated, p.startTime)
 		for _, e := range v.Experience {
-			p.extractExperience(e, v.BasicInfo.URN, extracted, aggregated)
+			extractExperience(e, v.BasicInfo.URN, extracted, aggregated)
 		}
 		for _, e := range v.Education {
-			p.extractEducation(e, v.BasicInfo.URN, extracted, aggregated)
+			extractEducation(e, v.BasicInfo.URN, extracted, aggregated)
 		}
 	}
 
-	newOrgUrls, err := p.filterNewOrganizationURLs(ctx, aggregated)
+	newOrgUrls, err := filterNewOrganizationURLs(ctx, p.pipeline.dbw, aggregated)
 	if err != nil {
 		p.Ended(err)
 		return
@@ -105,33 +124,35 @@ func (p *RequestPhase) Start(ctx context.Context) {
 	}
 
 	for _, v := range organizationResults {
-		p.extractOrganization(v, extracted, aggregated)
+		extractOrganization(v, extracted, aggregated, p.startTime)
 	}
 
-	if err := p.insertTmpPersonData(ctx, extracted); err != nil {
+	if err := insertTmpPersonData(ctx, p.pipeline.dbw, extracted); err != nil {
 		p.Ended(err)
 		return
 	}
 
-	if err := p.insertTmpOrganizationData(ctx, extracted); err != nil {
+	if err := insertTmpOrganizationData(ctx, p.pipeline.dbw, extracted); err != nil {
 		p.Ended(err)
 		return
 	}
 
-	if err := p.insertTmpDatasetData(ctx, aggregated); err != nil {
+	if err := insertTmpDatasetData(ctx, p.pipeline.dbw, aggregated); err != nil {
 		p.Ended(err)
 		return
 	}
+
+	p.next.Start(ctx)
 }
 
-func (p *RequestPhase) extractPerson(data apify.Person, ex *extracted, ag *aggregated) {
+func extractPerson(data apify.Person, ex *extracted, ag *aggregated, startTime time.Time) {
 	person := model.InsertTmpPersonParams{
 		FirstName:        data.BasicInfo.FirstName,
 		LastName:         data.BasicInfo.LastName,
 		ProfileUrl:       data.BasicInfo.ProfileURL,
 		PublicIdentifier: data.BasicInfo.PublicIdentifer,
 		Urn:              data.BasicInfo.URN,
-		CreatedAt:        p.startTime.Unix(),
+		CreatedAt:        startTime.Unix(),
 	}
 
 	if len(data.BasicInfo.Headline) > 0 {
@@ -148,28 +169,30 @@ func (p *RequestPhase) extractPerson(data apify.Person, ex *extracted, ag *aggre
 
 	if len(data.BasicInfo.Location.City) > 0 || len(data.BasicInfo.Location.Country) > 0 {
 		name := strings.Join([]string{data.BasicInfo.Location.City, data.BasicInfo.Location.Country}, ", ")
-		_, ok := ag.locations[data.BasicInfo.Location.Full]
-		if !ok {
-			location := model.InsertTmpDatasetLocationParams{
-				Name: name,
-			}
+		if len(name) > 0 {
+			_, ok := ag.locations[name]
+			if !ok {
+				location := model.InsertTmpDatasetLocationParams{
+					Name: name,
+				}
 
-			if len(data.BasicInfo.Location.City) > 0 {
-				location.City = &data.BasicInfo.Location.City
-			}
+				if len(data.BasicInfo.Location.City) > 0 {
+					location.City = &data.BasicInfo.Location.City
+				}
 
-			if len(data.BasicInfo.Location.Country) > 0 {
-				location.Country = &data.BasicInfo.Location.Country
-			}
+				if len(data.BasicInfo.Location.Country) > 0 {
+					location.Country = &data.BasicInfo.Location.Country
+				}
 
-			ag.locations[data.BasicInfo.Location.Full] = location
+				ag.locations[name] = location
+			}
 		}
 	}
 
 	ex.persons = append(ex.persons, person)
 }
 
-func (p *RequestPhase) extractExperience(data apify.Experience, personUrn string, ex *extracted, ag *aggregated) {
+func extractExperience(data apify.Experience, personUrn string, ex *extracted, ag *aggregated) {
 	_, ok := ag.organizationUrls[data.CompanyID]
 	if !ok {
 		ag.organizationUrls[data.CompanyID] = data.CompanyLinkedinURL
@@ -185,10 +208,14 @@ func (p *RequestPhase) extractExperience(data apify.Experience, personUrn string
 		if _, ok := ag.skills[s]; !ok {
 			ag.skills[s] = struct{}{}
 		}
-		ex.personSkills = append(ex.personSkills, model.InsertTmpPersonSkillParams{
-			PersonUrn: personUrn,
-			Skill:     s,
-		})
+		if m, ok := ex.personSkills[s]; !ok {
+			ex.personSkills[s] = []string{personUrn}
+		} else {
+			if !slices.Contains(m, personUrn) {
+				m = append(m, personUrn)
+				ex.personSkills[s] = m
+			}
+		}
 	}
 
 	if len(data.Location) > 0 {
@@ -228,14 +255,15 @@ func (p *RequestPhase) extractExperience(data apify.Experience, personUrn string
 	ex.experiences = append(ex.experiences, exp)
 }
 
-func (p *RequestPhase) extractEducation(data apify.Education, personUrn string, ex *extracted, ag *aggregated) {
+func extractEducation(data apify.Education, personUrn string, ex *extracted, ag *aggregated) {
 	_, ok := ag.organizationUrls[data.SchoolID]
 	if !ok {
 		ag.organizationUrls[data.SchoolID] = data.SchoolLinkedinURL
 	}
 
 	edu := model.InsertTmpEducationParams{
-		PersonUrn: personUrn,
+		PersonUrn:       personUrn,
+		OrganizationUrn: data.SchoolID,
 	}
 
 	if len(data.Degree) > 0 {
@@ -273,13 +301,13 @@ func (p *RequestPhase) extractEducation(data apify.Education, personUrn string, 
 	ex.educations = append(ex.educations, edu)
 }
 
-func (p *RequestPhase) filterNewOrganizationURLs(ctx context.Context, ag *aggregated) ([]string, error) {
+func filterNewOrganizationURLs(ctx context.Context, dbw *dbw.DBW, ag *aggregated) ([]string, error) {
 	var profileUrls []string
 	for _, v := range ag.organizationUrls {
 		profileUrls = append(profileUrls, v)
 	}
 
-	existing, err := p.pipeline.dbw.SQLC.SelectOrganizationsByLinkedinURLs(ctx, profileUrls)
+	existing, err := dbw.SQLC.SelectOrganizationsByLinkedinURLs(ctx, profileUrls)
 	if err != nil {
 		return nil, err
 	}
@@ -300,13 +328,13 @@ func (p *RequestPhase) filterNewOrganizationURLs(ctx context.Context, ag *aggreg
 	return newProfileUrls, nil
 }
 
-func (p *RequestPhase) extractOrganization(data apify.Company, ex *extracted, ag *aggregated) {
+func extractOrganization(data apify.Company, ex *extracted, ag *aggregated, startTime time.Time) {
 	org := model.InsertTmpOrganizationParams{
 		Name:          data.BasicInfo.Name,
 		UniversalName: data.BasicInfo.UniversalName,
 		ProfileUrl:    data.BasicInfo.LinkedinURL,
 		Urn:           data.CompanyURN,
-		CreatedAt:     p.startTime.Unix(),
+		CreatedAt:     startTime.Unix(),
 	}
 
 	if len(data.BasicInfo.Website) > 0 {
@@ -346,54 +374,86 @@ func (p *RequestPhase) extractOrganization(data apify.Company, ex *extracted, ag
 		if _, ok := ag.specialties[s]; !ok {
 			ag.specialties[s] = struct{}{}
 		}
-		ex.orgSpecialties = append(ex.orgSpecialties, model.InsertTmpOrganizationSpecialtyParams{
-			OrganizationUrn: data.CompanyURN,
-			Specialty:       s,
-		})
+		if m, ok := ex.orgSpecialties[s]; !ok {
+			ex.orgSpecialties[s] = []string{data.CompanyURN}
+		} else {
+			if !slices.Contains(m, data.CompanyURN) {
+				m = append(m, data.CompanyURN)
+				ex.orgSpecialties[s] = m
+			}
+		}
 	}
 
 	for _, s := range data.BasicInfo.Industries {
 		if _, ok := ag.industries[s]; !ok {
 			ag.industries[s] = struct{}{}
 		}
-		ex.orgIndustries = append(ex.orgIndustries, model.InsertTmpOrganizationIndustryParams{
-			OrganizationUrn: data.CompanyURN,
-			Industry:        s,
-		})
+		if m, ok := ex.orgIndustries[s]; !ok {
+			ex.orgIndustries[s] = []string{data.CompanyURN}
+		} else {
+			if !slices.Contains(m, data.CompanyURN) {
+				m = append(m, data.CompanyURN)
+				ex.orgIndustries[s] = m
+			}
+		}
 	}
 
 	if len(data.Locations.Headquarters.City) > 0 || len(data.Locations.Headquarters.State) > 0 || len(data.Locations.Headquarters.Country) > 0 {
 		name := strings.Join([]string{data.Locations.Headquarters.City, data.Locations.Headquarters.State, data.Locations.Headquarters.Country}, ", ")
-		_, ok := ag.locations[name]
-		if !ok {
-			location := model.InsertTmpDatasetLocationParams{}
+		if len(name) > 0 {
+			_, ok := ag.locations[name]
+			if !ok {
+				location := model.InsertTmpDatasetLocationParams{
+					Name: name,
+				}
 
-			if len(data.Locations.Headquarters.City) > 0 {
-				location.City = &data.Locations.Headquarters.City
+				if len(data.Locations.Headquarters.City) > 0 {
+					location.City = &data.Locations.Headquarters.City
+				}
+
+				if len(data.Locations.Headquarters.State) > 0 {
+					location.State = &data.Locations.Headquarters.State
+				}
+
+				if len(data.Locations.Headquarters.Country) > 0 {
+					location.Country = &data.Locations.Headquarters.Country
+				}
+
+				ag.locations[name] = location
 			}
 
-			if len(data.Locations.Headquarters.State) > 0 {
-				location.State = &data.Locations.Headquarters.State
+			if m, ok := ex.orgLocations[data.CompanyURN]; !ok {
+				ex.orgLocations[data.CompanyURN] = []model.InsertTmpOrganizationLocationParams{{
+					OrganizationUrn: data.CompanyURN,
+					Location:        name,
+					IsHeadquarters:  1,
+				}}
+			} else {
+				if !slices.ContainsFunc(m, func(l model.InsertTmpOrganizationLocationParams) bool {
+					return l.Location == name && l.OrganizationUrn == data.CompanyURN
+				}) {
+					m = append(m, model.InsertTmpOrganizationLocationParams{
+						OrganizationUrn: data.CompanyURN,
+						Location:        name,
+						IsHeadquarters:  1,
+					})
+					ex.orgLocations[data.CompanyURN] = m
+				}
 			}
-
-			if len(data.Locations.Headquarters.Country) > 0 {
-				location.Country = &data.Locations.Headquarters.Country
-			}
-
-			ag.locations[name] = location
-			ex.orgLocations = append(ex.orgLocations, model.InsertTmpOrganizationLocationParams{
-				OrganizationUrn: data.CompanyURN,
-				Location:        name,
-				IsHeadquarters:  1,
-			})
 		}
 	}
 
 	for _, l := range data.Locations.Offices {
 		name := strings.Join([]string{l.City, l.State, l.Country}, ", ")
+		if len(name) == 0 {
+			continue
+		}
+
 		_, ok := ag.locations[name]
 		if !ok {
-			location := model.InsertTmpDatasetLocationParams{}
+			location := model.InsertTmpDatasetLocationParams{
+				Name: name,
+			}
 
 			if len(l.City) > 0 {
 				location.City = &l.City
@@ -408,54 +468,67 @@ func (p *RequestPhase) extractOrganization(data apify.Company, ex *extracted, ag
 			}
 
 			ag.locations[name] = location
-			ex.orgLocations = append(ex.orgLocations, model.InsertTmpOrganizationLocationParams{
+		}
+
+		if m, ok := ex.orgLocations[data.CompanyURN]; !ok {
+			ex.orgLocations[data.CompanyURN] = []model.InsertTmpOrganizationLocationParams{{
 				OrganizationUrn: data.CompanyURN,
 				Location:        name,
 				IsHeadquarters:  0,
-			})
+			}}
+		} else {
+			if !slices.ContainsFunc(m, func(l model.InsertTmpOrganizationLocationParams) bool {
+				return l.Location == name && l.OrganizationUrn == data.CompanyURN
+			}) {
+				m = append(m, model.InsertTmpOrganizationLocationParams{
+					OrganizationUrn: data.CompanyURN,
+					Location:        name,
+					IsHeadquarters:  0,
+				})
+				ex.orgLocations[data.CompanyURN] = m
+			}
 		}
 	}
 
 	ex.organizations = append(ex.organizations, org)
 }
 
-func (p *RequestPhase) insertTmpPersonData(ctx context.Context, ex *extracted) error {
-	err := p.pipeline.dbw.SQLC.CreateTmpPersonsTable(ctx)
+func insertTmpPersonData(ctx context.Context, dbw *dbw.DBW, ex *extracted) error {
+	err := dbw.SQLC.CreateTmpPersonsTable(ctx)
 	if err != nil {
-		return fmt.Errorf("p.pipeline.dbw.SQLC.CreateTmpPersonsTable %w", err)
+		return fmt.Errorf("dbw.SQLC.CreateTmpPersonsTable %w", err)
 	}
 
-	_, err = p.pipeline.dbw.DB.Exec(`
+	_, err = dbw.DB.Exec(`
 		CREATE INDEX IF NOT EXISTS index_tmp_person_name ON tmp_persons(last_name, first_name);
 		CREATE INDEX IF NOT EXISTS index_tmp_person_location ON tmp_persons(location);
 	`)
 	if err != nil {
-		return fmt.Errorf("p.pipeline.dbw.DB.Exec CREATE tmp_persons indexes %w", err)
+		return fmt.Errorf("dbw.DB.Exec CREATE tmp_persons indexes %w", err)
 	}
 
-	err = p.pipeline.dbw.SQLC.CreateTmpPersonSkillsTable(ctx)
+	err = dbw.SQLC.CreateTmpPersonSkillsTable(ctx)
 	if err != nil {
-		return fmt.Errorf("p.pipeline.dbw.SQLC.CreateTmpPersonSkillsTable %w", err)
+		return fmt.Errorf("dbw.SQLC.CreateTmpPersonSkillsTable %w", err)
 	}
 
-	err = p.pipeline.dbw.SQLC.CreateTmpExperiencesTable(ctx)
+	err = dbw.SQLC.CreateTmpExperiencesTable(ctx)
 	if err != nil {
-		return fmt.Errorf("p.pipeline.dbw.SQLC.CreateTmpExperiencesTable %w", err)
+		return fmt.Errorf("dbw.SQLC.CreateTmpExperiencesTable %w", err)
 	}
-
-	_, err = p.pipeline.dbw.DB.Exec(`
-		CREATE INDEX IF NOT EXISTS index_tmp_experience_person_organization ON tmp_experiences(person_id, organization_id);
+	_, err = dbw.DB.Exec(`
+		CREATE INDEX IF NOT EXISTS index_tmp_experience_person_organization ON tmp_experiences(person_urn, organization_urn);
 	`)
 	if err != nil {
-		return fmt.Errorf("p.pipeline.dbw.DB.Exec CREATE tmp_experiences indexes %w", err)
+		return fmt.Errorf("dbw.DB.Exec CREATE tmp_experiences indexes %w", err)
 	}
 
-	err = p.pipeline.dbw.SQLC.CreateTmpEducationsTable(ctx)
+	err = dbw.SQLC.CreateTmpEducationsTable(ctx)
 	if err != nil {
-		return fmt.Errorf("p.pipeline.dbw.SQLC.CreateTmpEducationsTable %w", err)
+		return fmt.Errorf("dbw.SQLC.CreateTmpEducationsTable %w", err)
 	}
-	_, err = p.pipeline.dbw.DB.Exec(`
-		CREATE INDEX IF NOT EXISTS index_tmp_education_person_organization ON tmp_educations(person_id, organization_id);
+	_, err = dbw.DB.Exec(`
+		CREATE INDEX IF NOT EXISTS index_tmp_education_person_organization ON tmp_educations(person_urn, organization_urn);
 		CREATE INDEX IF NOT EXISTS index_tmp_education_degree ON tmp_educations(degree);
 		CREATE INDEX IF NOT EXISTS index_tmp_education_study_field ON tmp_educations(study_field);
 	`)
@@ -464,7 +537,7 @@ func (p *RequestPhase) insertTmpPersonData(ctx context.Context, ex *extracted) e
 		return fmt.Errorf("tx.Exec CREATE tmp_educations indexes %w", err)
 	}
 
-	if _, err := database.BatchInsert(ctx, p.pipeline.dbw.DB, database.BatchInsertDesc[model.InsertTmpPersonParams]{
+	if _, err := database.BatchInsert(ctx, dbw.DB, database.BatchInsertDesc[model.InsertTmpPersonParams]{
 		Query: model.InsertTmpPerson,
 		Items: ex.persons,
 		ExtractFn: func(itpp model.InsertTmpPersonParams) []interface{} {
@@ -485,9 +558,19 @@ func (p *RequestPhase) insertTmpPersonData(ctx context.Context, ex *extracted) e
 		return err
 	}
 
-	if _, err := database.BatchInsert(ctx, p.pipeline.dbw.DB, database.BatchInsertDesc[model.InsertTmpPersonSkillParams]{
+	var personSkills []model.InsertTmpPersonSkillParams
+	for k, v := range ex.personSkills {
+		for _, urn := range v {
+			personSkills = append(personSkills, model.InsertTmpPersonSkillParams{
+				PersonUrn: urn,
+				Skill:     k,
+			})
+		}
+	}
+
+	if _, err := database.BatchInsert(ctx, dbw.DB, database.BatchInsertDesc[model.InsertTmpPersonSkillParams]{
 		Query: model.InsertTmpPersonSkill,
-		Items: ex.personSkills,
+		Items: personSkills,
 		ExtractFn: func(itpsp model.InsertTmpPersonSkillParams) []interface{} {
 			return []interface{}{
 				itpsp.PersonUrn,
@@ -498,7 +581,7 @@ func (p *RequestPhase) insertTmpPersonData(ctx context.Context, ex *extracted) e
 		return err
 	}
 
-	if _, err := database.BatchInsert(ctx, p.pipeline.dbw.DB, database.BatchInsertDesc[model.InsertTmpExperienceParams]{
+	if _, err := database.BatchInsert(ctx, dbw.DB, database.BatchInsertDesc[model.InsertTmpExperienceParams]{
 		Query: model.InsertTmpExperience,
 		Items: ex.experiences,
 		ExtractFn: func(itep model.InsertTmpExperienceParams) []interface{} {
@@ -520,7 +603,7 @@ func (p *RequestPhase) insertTmpPersonData(ctx context.Context, ex *extracted) e
 		return err
 	}
 
-	if _, err := database.BatchInsert(ctx, p.pipeline.dbw.DB, database.BatchInsertDesc[model.InsertTmpEducationParams]{
+	if _, err := database.BatchInsert(ctx, dbw.DB, database.BatchInsertDesc[model.InsertTmpEducationParams]{
 		Query: model.InsertTmpEducation,
 		Items: ex.educations,
 		ExtractFn: func(itep model.InsertTmpEducationParams) []interface{} {
@@ -547,25 +630,25 @@ func (p *RequestPhase) insertTmpPersonData(ctx context.Context, ex *extracted) e
 	return nil
 }
 
-func (p *RequestPhase) insertTmpOrganizationData(ctx context.Context, ex *extracted) error {
-	err := p.pipeline.dbw.SQLC.CreateTmpOrganizationsTable(ctx)
+func insertTmpOrganizationData(ctx context.Context, dbw *dbw.DBW, ex *extracted) error {
+	err := dbw.SQLC.CreateTmpOrganizationsTable(ctx)
 	if err != nil {
-		return fmt.Errorf("p.pipeline.dbw.SQLC.CreateTmpOrganizationsTable %w", err)
+		return fmt.Errorf("dbw.SQLC.CreateTmpOrganizationsTable %w", err)
 	}
-	err = p.pipeline.dbw.SQLC.CreateTmpOrganizationLocationsTable(ctx)
+	err = dbw.SQLC.CreateTmpOrganizationLocationsTable(ctx)
 	if err != nil {
-		return fmt.Errorf("p.pipeline.dbw.SQLC.CreateTmpOrganizationLocationsTable %w", err)
+		return fmt.Errorf("dbw.SQLC.CreateTmpOrganizationLocationsTable %w", err)
 	}
-	err = p.pipeline.dbw.SQLC.CreateTmpOrganizationSpecialtiesTable(ctx)
+	err = dbw.SQLC.CreateTmpOrganizationSpecialtiesTable(ctx)
 	if err != nil {
-		return fmt.Errorf("p.pipeline.dbw.SQLC.CreateTmpOrganizationSpecialtiesTable %w", err)
+		return fmt.Errorf("dbw.SQLC.CreateTmpOrganizationSpecialtiesTable %w", err)
 	}
-	err = p.pipeline.dbw.SQLC.CreateTmpOrganizationIndustriesTable(ctx)
+	err = dbw.SQLC.CreateTmpOrganizationIndustriesTable(ctx)
 	if err != nil {
-		return fmt.Errorf("p.pipeline.dbw.SQLC.CreateTmpOrganizationIndustriesTable %w", err)
+		return fmt.Errorf("dbw.SQLC.CreateTmpOrganizationIndustriesTable %w", err)
 	}
 
-	if _, err := database.BatchInsert(ctx, p.pipeline.dbw.DB, database.BatchInsertDesc[model.InsertTmpOrganizationParams]{
+	if _, err := database.BatchInsert(ctx, dbw.DB, database.BatchInsertDesc[model.InsertTmpOrganizationParams]{
 		Query: model.InsertTmpOrganization,
 		Items: ex.organizations,
 		ExtractFn: func(itop model.InsertTmpOrganizationParams) []interface{} {
@@ -574,6 +657,7 @@ func (p *RequestPhase) insertTmpOrganizationData(ctx context.Context, ex *extrac
 				itop.UniversalName,
 				itop.Website,
 				itop.ProfileUrl,
+				itop.LogoUrl,
 				itop.FoundedYear,
 				itop.FoundedMonth,
 				itop.OrganizationType,
@@ -587,9 +671,19 @@ func (p *RequestPhase) insertTmpOrganizationData(ctx context.Context, ex *extrac
 		return err
 	}
 
-	if _, err := database.BatchInsert(ctx, p.pipeline.dbw.DB, database.BatchInsertDesc[model.InsertTmpOrganizationIndustryParams]{
+	var orgIndustries []model.InsertTmpOrganizationIndustryParams
+	for k, v := range ex.orgIndustries {
+		for _, urn := range v {
+			orgIndustries = append(orgIndustries, model.InsertTmpOrganizationIndustryParams{
+				OrganizationUrn: urn,
+				Industry:        k,
+			})
+		}
+	}
+
+	if _, err := database.BatchInsert(ctx, dbw.DB, database.BatchInsertDesc[model.InsertTmpOrganizationIndustryParams]{
 		Query: model.InsertTmpOrganizationIndustry,
-		Items: ex.orgIndustries,
+		Items: orgIndustries,
 		ExtractFn: func(itop model.InsertTmpOrganizationIndustryParams) []interface{} {
 			return []interface{}{
 				itop.OrganizationUrn,
@@ -600,9 +694,19 @@ func (p *RequestPhase) insertTmpOrganizationData(ctx context.Context, ex *extrac
 		return err
 	}
 
-	if _, err := database.BatchInsert(ctx, p.pipeline.dbw.DB, database.BatchInsertDesc[model.InsertTmpOrganizationSpecialtyParams]{
+	var orgSpecialties []model.InsertTmpOrganizationSpecialtyParams
+	for k, v := range ex.orgSpecialties {
+		for _, urn := range v {
+			orgSpecialties = append(orgSpecialties, model.InsertTmpOrganizationSpecialtyParams{
+				OrganizationUrn: urn,
+				Specialty:       k,
+			})
+		}
+	}
+
+	if _, err := database.BatchInsert(ctx, dbw.DB, database.BatchInsertDesc[model.InsertTmpOrganizationSpecialtyParams]{
 		Query: model.InsertTmpOrganizationSpecialty,
-		Items: ex.orgSpecialties,
+		Items: orgSpecialties,
 		ExtractFn: func(itop model.InsertTmpOrganizationSpecialtyParams) []interface{} {
 			return []interface{}{
 				itop.OrganizationUrn,
@@ -613,9 +717,14 @@ func (p *RequestPhase) insertTmpOrganizationData(ctx context.Context, ex *extrac
 		return err
 	}
 
-	if _, err := database.BatchInsert(ctx, p.pipeline.dbw.DB, database.BatchInsertDesc[model.InsertTmpOrganizationLocationParams]{
+	var orgLocations []model.InsertTmpOrganizationLocationParams
+	for _, params := range ex.orgLocations {
+		orgLocations = append(orgLocations, params...)
+	}
+
+	if _, err := database.BatchInsert(ctx, dbw.DB, database.BatchInsertDesc[model.InsertTmpOrganizationLocationParams]{
 		Query: model.InsertTmpOrganizationLocation,
-		Items: ex.orgLocations,
+		Items: orgLocations,
 		ExtractFn: func(itop model.InsertTmpOrganizationLocationParams) []interface{} {
 			return []interface{}{
 				itop.OrganizationUrn,
@@ -630,30 +739,30 @@ func (p *RequestPhase) insertTmpOrganizationData(ctx context.Context, ex *extrac
 	return nil
 }
 
-func (p *RequestPhase) insertTmpDatasetData(ctx context.Context, ag *aggregated) error {
-	err := p.pipeline.dbw.SQLC.CreateTmpDatasetDegreesTable(ctx)
+func insertTmpDatasetData(ctx context.Context, dbw *dbw.DBW, ag *aggregated) error {
+	err := dbw.SQLC.CreateTmpDatasetDegreesTable(ctx)
 	if err != nil {
-		return fmt.Errorf("p.pipeline.dbw.SQLC.CreateTmpDatasetDegreesTable %w", err)
+		return fmt.Errorf("dbw.SQLC.CreateTmpDatasetDegreesTable %w", err)
 	}
-	err = p.pipeline.dbw.SQLC.CreateTmpDatasetIndustriesTable(ctx)
+	err = dbw.SQLC.CreateTmpDatasetIndustriesTable(ctx)
 	if err != nil {
-		return fmt.Errorf("p.pipeline.dbw.SQLC.CreateTmpDatasetIndustriesTable %w", err)
+		return fmt.Errorf("dbw.SQLC.CreateTmpDatasetIndustriesTable %w", err)
 	}
-	err = p.pipeline.dbw.SQLC.CreateTmpDatasetLocationsTable(ctx)
+	err = dbw.SQLC.CreateTmpDatasetLocationsTable(ctx)
 	if err != nil {
-		return fmt.Errorf("p.pipeline.dbw.SQLC.CreateTmpDatasetLocationsTable %w", err)
+		return fmt.Errorf("dbw.SQLC.CreateTmpDatasetLocationsTable %w", err)
 	}
-	err = p.pipeline.dbw.SQLC.CreateTmpDatasetSkillsTable(ctx)
+	err = dbw.SQLC.CreateTmpDatasetSkillsTable(ctx)
 	if err != nil {
-		return fmt.Errorf("p.pipeline.dbw.SQLC.CreateTmpDatasetSkillsTable %w", err)
+		return fmt.Errorf("dbw.SQLC.CreateTmpDatasetSkillsTable %w", err)
 	}
-	err = p.pipeline.dbw.SQLC.CreateTmpDatasetSpecialtiesTable(ctx)
+	err = dbw.SQLC.CreateTmpDatasetSpecialtiesTable(ctx)
 	if err != nil {
-		return fmt.Errorf("p.pipeline.dbw.SQLC.CreateTmpDatasetSpecialtiesTable %w", err)
+		return fmt.Errorf("dbw.SQLC.CreateTmpDatasetSpecialtiesTable %w", err)
 	}
-	err = p.pipeline.dbw.SQLC.CreateTmpDatasetStudyFieldsTable(ctx)
+	err = dbw.SQLC.CreateTmpDatasetStudyFieldsTable(ctx)
 	if err != nil {
-		return fmt.Errorf("p.pipeline.dbw.SQLC.CreateTmpDatasetStudyFieldsTable %w", err)
+		return fmt.Errorf("dbw.SQLC.CreateTmpDatasetStudyFieldsTable %w", err)
 	}
 
 	var degrees []string
@@ -661,7 +770,7 @@ func (p *RequestPhase) insertTmpDatasetData(ctx context.Context, ag *aggregated)
 		degrees = append(degrees, k)
 	}
 
-	if _, err := database.BatchInsert(ctx, p.pipeline.dbw.DB, database.BatchInsertDesc[string]{
+	if _, err := database.BatchInsert(ctx, dbw.DB, database.BatchInsertDesc[string]{
 		Query: model.InsertTmpDatasetDegree,
 		Items: degrees,
 		ExtractFn: func(s string) []interface{} {
@@ -678,7 +787,7 @@ func (p *RequestPhase) insertTmpDatasetData(ctx context.Context, ag *aggregated)
 		industries = append(industries, k)
 	}
 
-	if _, err := database.BatchInsert(ctx, p.pipeline.dbw.DB, database.BatchInsertDesc[string]{
+	if _, err := database.BatchInsert(ctx, dbw.DB, database.BatchInsertDesc[string]{
 		Query: model.InsertTmpDatasetIndustry,
 		Items: industries,
 		ExtractFn: func(s string) []interface{} {
@@ -695,7 +804,7 @@ func (p *RequestPhase) insertTmpDatasetData(ctx context.Context, ag *aggregated)
 		locations = append(locations, l)
 	}
 
-	if _, err := database.BatchInsert(ctx, p.pipeline.dbw.DB, database.BatchInsertDesc[model.InsertTmpDatasetLocationParams]{
+	if _, err := database.BatchInsert(ctx, dbw.DB, database.BatchInsertDesc[model.InsertTmpDatasetLocationParams]{
 		Query: model.InsertTmpDatasetLocation,
 		Items: locations,
 		ExtractFn: func(itdlp model.InsertTmpDatasetLocationParams) []interface{} {
@@ -715,7 +824,7 @@ func (p *RequestPhase) insertTmpDatasetData(ctx context.Context, ag *aggregated)
 		skills = append(skills, k)
 	}
 
-	if _, err := database.BatchInsert(ctx, p.pipeline.dbw.DB, database.BatchInsertDesc[string]{
+	if _, err := database.BatchInsert(ctx, dbw.DB, database.BatchInsertDesc[string]{
 		Query: model.InsertTmpDatasetSkill,
 		Items: skills,
 		ExtractFn: func(s string) []interface{} {
@@ -732,7 +841,7 @@ func (p *RequestPhase) insertTmpDatasetData(ctx context.Context, ag *aggregated)
 		specialties = append(specialties, k)
 	}
 
-	if _, err := database.BatchInsert(ctx, p.pipeline.dbw.DB, database.BatchInsertDesc[string]{
+	if _, err := database.BatchInsert(ctx, dbw.DB, database.BatchInsertDesc[string]{
 		Query: model.InsertTmpDatasetSpecialty,
 		Items: specialties,
 		ExtractFn: func(s string) []interface{} {
@@ -749,7 +858,7 @@ func (p *RequestPhase) insertTmpDatasetData(ctx context.Context, ag *aggregated)
 		studyFields = append(studyFields, k)
 	}
 
-	if _, err := database.BatchInsert(ctx, p.pipeline.dbw.DB, database.BatchInsertDesc[string]{
+	if _, err := database.BatchInsert(ctx, dbw.DB, database.BatchInsertDesc[string]{
 		Query: model.InsertTmpDatasetStudyField,
 		Items: studyFields,
 		ExtractFn: func(s string) []interface{} {

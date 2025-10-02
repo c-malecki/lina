@@ -24,3 +24,21 @@ INSERT INTO organization_industries
 (organization_id, industry_id)
 VALUES
 (?, ?);
+
+-- name: CountOrganizations :one
+SELECT COUNT(*) FROM organizations;
+
+-- name: CountCompanies :one
+SELECT COUNT(*) FROM organizations WHERE organization_type = 1;
+
+-- name: CountSchools :one
+SELECT COUNT(*) FROM organizations WHERE organization_type = 2;
+
+-- name: CountOrganizationIndustries :one
+SELECT COUNT(*) FROM organization_industries;
+
+-- name: CountOrganizationSpecialties :one
+SELECT COUNT(*) FROM organization_specialties;
+
+-- name: CountOrganizationLocations :one
+SELECT COUNT(*) FROM organization_locations;

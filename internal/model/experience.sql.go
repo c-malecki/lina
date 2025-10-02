@@ -9,6 +9,17 @@ import (
 	"context"
 )
 
+const CountExperiences = `-- name: CountExperiences :one
+SELECT COUNT(*) FROM experiences
+`
+
+func (q *Queries) CountExperiences(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountExperiences)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const InsertExperience = `-- name: InsertExperience :exec
 INSERT INTO experiences
 (person_id, organization_id, title, location_raw, "description", start_year, start_month, is_current, end_year, end_month, skills_url)

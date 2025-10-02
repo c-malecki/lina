@@ -19,20 +19,20 @@ INSERT INTO dataset_specialties ("name") VALUES (?);
 -- name: InsertDatasetStudyField :exec
 INSERT INTO dataset_study_fields ("name") VALUES (?);
 
--- name: SelectDatasetDegreesByName :many
-SELECT * FROM dataset_degrees WHERE "name" IN (sqlic.slice(names));
+-- name: CountDatasetDegrees :one
+SELECT COUNT(*) FROM dataset_degrees;
 
--- name: SelectDatasetIndustryByName :many
-SELECT * FROM dataset_industries WHERE "name" IN (sqlic.slice(names));
+-- name: CountDatasetIndustries :one
+SELECT COUNT(*) FROM dataset_industries;
 
--- name: SelectDatasetLocationByName :many
-SELECT * FROM dataset_locations WHERE "name" IN (sqlic.slice(names));
+-- name: CountDatasetLocations :one
+SELECT COUNT(*) FROM dataset_locations;
 
--- name: SelectDatasetSkillByName :many
-SELECT * FROM dataset_skills WHERE "name" IN (sqlic.slice(names));
+-- name: CountDatasetSkills :one
+SELECT COUNT(*) FROM dataset_skills;
 
--- name: SelectDatasetSpecialtyByName :many
-SELECT * FROM dataset_specialties WHERE "name" IN (sqlic.slice(names));
+-- name: CountDatasetSpecialties :one
+SELECT COUNT(*) FROM dataset_specialties;
 
--- name: SelectDatasetStudyFieldByName :many
-SELECT * FROM dataset_study_fields WHERE "name" IN (sqlic.slice(names));
+-- name: CountDatasetStudyFields :one
+SELECT COUNT(*) FROM dataset_study_fields;

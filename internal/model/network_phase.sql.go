@@ -9,6 +9,21 @@ import (
 	"context"
 )
 
+const DeleteConnectionsNotInTmp = `-- name: DeleteConnectionsNotInTmp :exec
+DELETE FROM connections
+WHERE network_id = ?
+AND NOT EXISTS (
+  SELECT 1 
+  FROM tmp_connections t 
+  WHERE t.person_id = connections.person_id
+)
+`
+
+func (q *Queries) DeleteConnectionsNotInTmp(ctx context.Context, networkID int64) error {
+	_, err := q.db.ExecContext(ctx, DeleteConnectionsNotInTmp, networkID)
+	return err
+}
+
 const InsertNewConnectionsFromTmp = `-- name: InsertNewConnectionsFromTmp :exec
 INSERT INTO connections
 (network_id, person_id)
@@ -17,12 +32,11 @@ SELECT
   t.person_id
 FROM tmp_connections t
 LEFT JOIN connections c ON c.person_id = t.person_id
-  AND c.network_id = ?
 WHERE t.person_id IS NOT NULL
   AND c.id IS NULL
 `
 
-func (q *Queries) InsertNewConnectionsFromTmp(ctx context.Context, networkID int64) error {
-	_, err := q.db.ExecContext(ctx, InsertNewConnectionsFromTmp, networkID)
+func (q *Queries) InsertNewConnectionsFromTmp(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, InsertNewConnectionsFromTmp)
 	return err
 }

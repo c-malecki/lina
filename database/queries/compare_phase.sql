@@ -18,9 +18,8 @@ SELECT profile_url FROM tmp_connections WHERE person_id IS NULL;
 SELECT COUNT(t.id)
 FROM tmp_connections t
 LEFT JOIN connections c ON c.person_id = t.person_id
-  AND t.person_id IS NOT NULL
   AND c.network_id = ?
-WHERE c.id IS NULL;
+WHERE c.id IS NULL AND t.person_id IS NOT NULL;
 
 -- name: CountConnectionsToRemove :one
 SELECT COUNT(c.id)

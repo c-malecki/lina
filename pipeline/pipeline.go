@@ -31,6 +31,7 @@ func (s PIPELINE_STATUS) String() string {
 type Phase interface {
 	Start(ctx context.Context)
 	Ended(err error)
+	Next() Phase
 }
 
 type PipelinePhases map[string]Phase

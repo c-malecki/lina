@@ -9,6 +9,72 @@ import (
 	"context"
 )
 
+const CountDatasetDegrees = `-- name: CountDatasetDegrees :one
+SELECT COUNT(*) FROM dataset_degrees
+`
+
+func (q *Queries) CountDatasetDegrees(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountDatasetDegrees)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountDatasetIndustries = `-- name: CountDatasetIndustries :one
+SELECT COUNT(*) FROM dataset_industries
+`
+
+func (q *Queries) CountDatasetIndustries(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountDatasetIndustries)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountDatasetLocations = `-- name: CountDatasetLocations :one
+SELECT COUNT(*) FROM dataset_locations
+`
+
+func (q *Queries) CountDatasetLocations(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountDatasetLocations)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountDatasetSkills = `-- name: CountDatasetSkills :one
+SELECT COUNT(*) FROM dataset_skills
+`
+
+func (q *Queries) CountDatasetSkills(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountDatasetSkills)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountDatasetSpecialties = `-- name: CountDatasetSpecialties :one
+SELECT COUNT(*) FROM dataset_specialties
+`
+
+func (q *Queries) CountDatasetSpecialties(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountDatasetSpecialties)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountDatasetStudyFields = `-- name: CountDatasetStudyFields :one
+SELECT COUNT(*) FROM dataset_study_fields
+`
+
+func (q *Queries) CountDatasetStudyFields(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountDatasetStudyFields)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const InsertDatasetDegree = `-- name: InsertDatasetDegree :exec
 INSERT INTO dataset_degrees ("name") VALUES (?)
 `
@@ -76,172 +142,4 @@ INSERT INTO dataset_study_fields ("name") VALUES (?)
 func (q *Queries) InsertDatasetStudyField(ctx context.Context, name string) error {
 	_, err := q.db.ExecContext(ctx, InsertDatasetStudyField, name)
 	return err
-}
-
-const SelectDatasetDegreesByName = `-- name: SelectDatasetDegreesByName :many
-SELECT id, name FROM dataset_degrees WHERE "name" IN (sqlic.slice(names))
-`
-
-func (q *Queries) SelectDatasetDegreesByName(ctx context.Context) ([]DatasetDegrees, error) {
-	rows, err := q.db.QueryContext(ctx, SelectDatasetDegreesByName)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []DatasetDegrees{}
-	for rows.Next() {
-		var i DatasetDegrees
-		if err := rows.Scan(&i.ID, &i.Name); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const SelectDatasetIndustryByName = `-- name: SelectDatasetIndustryByName :many
-SELECT id, name FROM dataset_industries WHERE "name" IN (sqlic.slice(names))
-`
-
-func (q *Queries) SelectDatasetIndustryByName(ctx context.Context) ([]DatasetIndustries, error) {
-	rows, err := q.db.QueryContext(ctx, SelectDatasetIndustryByName)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []DatasetIndustries{}
-	for rows.Next() {
-		var i DatasetIndustries
-		if err := rows.Scan(&i.ID, &i.Name); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const SelectDatasetLocationByName = `-- name: SelectDatasetLocationByName :many
-SELECT id, name, city, state, country FROM dataset_locations WHERE "name" IN (sqlic.slice(names))
-`
-
-func (q *Queries) SelectDatasetLocationByName(ctx context.Context) ([]DatasetLocations, error) {
-	rows, err := q.db.QueryContext(ctx, SelectDatasetLocationByName)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []DatasetLocations{}
-	for rows.Next() {
-		var i DatasetLocations
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.City,
-			&i.State,
-			&i.Country,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const SelectDatasetSkillByName = `-- name: SelectDatasetSkillByName :many
-SELECT id, name FROM dataset_skills WHERE "name" IN (sqlic.slice(names))
-`
-
-func (q *Queries) SelectDatasetSkillByName(ctx context.Context) ([]DatasetSkills, error) {
-	rows, err := q.db.QueryContext(ctx, SelectDatasetSkillByName)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []DatasetSkills{}
-	for rows.Next() {
-		var i DatasetSkills
-		if err := rows.Scan(&i.ID, &i.Name); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const SelectDatasetSpecialtyByName = `-- name: SelectDatasetSpecialtyByName :many
-SELECT id, name FROM dataset_specialties WHERE "name" IN (sqlic.slice(names))
-`
-
-func (q *Queries) SelectDatasetSpecialtyByName(ctx context.Context) ([]DatasetSpecialties, error) {
-	rows, err := q.db.QueryContext(ctx, SelectDatasetSpecialtyByName)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []DatasetSpecialties{}
-	for rows.Next() {
-		var i DatasetSpecialties
-		if err := rows.Scan(&i.ID, &i.Name); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const SelectDatasetStudyFieldByName = `-- name: SelectDatasetStudyFieldByName :many
-SELECT id, name FROM dataset_study_fields WHERE "name" IN (sqlic.slice(names))
-`
-
-func (q *Queries) SelectDatasetStudyFieldByName(ctx context.Context) ([]DatasetStudyFields, error) {
-	rows, err := q.db.QueryContext(ctx, SelectDatasetStudyFieldByName)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []DatasetStudyFields{}
-	for rows.Next() {
-		var i DatasetStudyFields
-		if err := rows.Scan(&i.ID, &i.Name); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
 }

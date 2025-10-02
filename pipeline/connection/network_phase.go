@@ -20,11 +20,25 @@ func (p *NetworkPhase) Ended(err error) {
 	}
 }
 
+func (p *NetworkPhase) Next() pipeline.Phase {
+	return nil
+}
+
 func (p *NetworkPhase) Start(ctx context.Context) {
 	p.startTime = time.Now()
 	p.pipeline.SetCurrent(p)
 
-	if err := p.pipeline.dbw.SQLC.InsertNewConnectionsFromTmp(ctx, p.pipeline.network.ID); err != nil {
+	if err := p.pipeline.dbw.SQLC.UpdateTmpConnectionPersonIDs(ctx); err != nil {
+		p.Ended(err)
+		return
+	}
+
+	if err := p.pipeline.dbw.SQLC.InsertNewConnectionsFromTmp(ctx); err != nil {
+		p.Ended(err)
+		return
+	}
+
+	if err := p.pipeline.dbw.SQLC.DeleteConnectionsNotInTmp(ctx, p.pipeline.network.ID); err != nil {
 		p.Ended(err)
 		return
 	}

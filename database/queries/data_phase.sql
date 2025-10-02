@@ -76,8 +76,8 @@ SELECT
   t.urn,
   t.created_at
 FROM tmp_organizations t
-LEFT JOIN organizations o ON o.urn = t.urn
-WHERE o.id IS NULL;
+LEFT JOIN organizations existing ON existing.urn = t.urn
+WHERE existing.id IS NULL;
 
 -- name: InsertOrganizationLocationsFromTmp :exec
 INSERT INTO organization_locations
@@ -88,17 +88,12 @@ SELECT
   t.is_headquarters
 FROM tmp_organization_locations t
 INNER JOIN organizations o ON o.urn = t.organization_urn
-INNER JOIN dataset_locations d ON d.name = t.location;
-
--- name: InsertOrganizationSpecialtiesFromTmp :exec
-INSERT INTO organization_specialties
-(organization_id, specialty_id)
-SELECT
-  o.id AS organization_id,
-  d.id AS specialty_id
-FROM tmp_organization_specialties t
-INNER JOIN organizations o ON o.urn = t.organization_urn
-INNER JOIN dataset_specialties d ON d.name = t.specialty;
+INNER JOIN dataset_locations d ON d.name = t.location
+LEFT JOIN organization_locations existing
+  ON existing.organization_id = o.id
+  AND existing.location_id = d.id
+  AND existing.is_headquarters = t.is_headquarters
+WHERE existing.id IS NULL;
 
 -- name: InsertOrganizationIndustriesFromTmp :exec
 INSERT INTO organization_industries
@@ -108,7 +103,25 @@ SELECT
   d.id AS industry_id
 FROM tmp_organization_industries t
 INNER JOIN organizations o ON o.urn = t.organization_urn
-INNER JOIN dataset_industries d ON d.name = t.industry;
+INNER JOIN dataset_industries d ON d.name = t.industry
+LEFT JOIN organization_industries existing
+  ON existing.organization_id = o.id
+  AND existing.industry_id = d.id
+WHERE existing.id IS NULL;
+
+-- name: InsertOrganizationSpecialtiesFromTmp :exec
+INSERT INTO organization_specialties
+(organization_id, specialty_id)
+SELECT
+  o.id AS organization_id,
+  d.id AS specialty_id
+FROM tmp_organization_specialties t
+INNER JOIN organizations o ON o.urn = t.organization_urn
+INNER JOIN dataset_specialties d ON d.name = t.specialty
+LEFT JOIN organization_specialties existing
+  ON existing.organization_id = o.id
+  AND existing.specialty_id = d.id
+WHERE existing.id IS NULL;
 
 -- persons
 
@@ -127,17 +140,24 @@ SELECT
   t.urn,
   t.created_at
 FROM tmp_persons t
-LEFT JOIN dataset_locations dl ON dl.name = t.location;
+LEFT JOIN dataset_locations dl ON dl.name = t.location
+LEFT JOIN persons existing
+  ON existing.urn = t.urn
+WHERE existing.id IS NULL;
 
 -- name: InsertPersonSkillsFromTmp :exec
 INSERT INTO person_skills
 (person_id, skill_id)
 SELECT
   p.id AS person_id,
-  d.id AS skill
+  d.id AS skill_id
 FROM tmp_person_skills t
 INNER JOIN persons p ON p.urn = t.person_urn
-INNER JOIN dataset_skills d ON d.name = t.skill;
+INNER JOIN dataset_skills d ON d.name = t.skill
+LEFT JOIN person_skills existing
+  ON existing.person_id = p.id
+  AND existing.skill_id = d.id
+WHERE existing.id IS NULL;
 
 -- name: InsertExperiencesFromTmp :exec
 INSERT INTO experiences
@@ -146,6 +166,7 @@ SELECT
   p.id AS person_id,
   o.id AS organization_id,
   t.title,
+  t.location_raw,
   t.description,
   t.start_year,
   t.start_month,
@@ -155,7 +176,12 @@ SELECT
   t.skills_url
 FROM tmp_experiences t
 INNER JOIN persons p ON p.urn = t.person_urn
-INNER JOIN organizations o ON o.urn = t.organization_urn;
+INNER JOIN organizations o ON o.urn = t.organization_urn
+LEFT JOIN experiences existing
+  ON existing.person_id = p.id
+  AND existing.organization_id = o.id
+  AND existing.title = t.title
+WHERE existing.id IS NULL;
 
 -- name: InsertEducationsFromTmp :exec
 INSERT INTO educations
@@ -173,4 +199,124 @@ FROM tmp_educations t
 INNER JOIN persons p ON p.urn = t.person_urn
 INNER JOIN organizations o ON o.urn = t.organization_urn
 LEFT JOIN dataset_degrees dd ON dd.name = t.degree
-LEFT JOIN dataset_study_fields dsf ON dsf.name = t.study_field;
+LEFT JOIN dataset_study_fields dsf ON dsf.name = t.study_field
+LEFT JOIN educations existing
+  ON existing.person_id = p.id
+  AND existing.organization_id = o.id
+  AND existing.start_year = t.start_year
+  AND existing.start_month = t.start_month
+WHERE existing.id IS NULL;
+
+-- testing
+
+-- name: CountTmpConnections :one
+SELECT COUNT(*) FROM tmp_connections;
+
+-- name: CountTmpDatasetDegrees :one
+SELECT COUNT(*) FROM tmp_dataset_degrees;
+
+-- name: CountTmpDatasetStudyFields :one
+SELECT COUNT(*) FROM tmp_dataset_study_fields;
+
+-- name: CountTmpDatasetIndustries :one
+SELECT COUNT(*) FROM tmp_dataset_industries;
+
+-- name: CountTmpDatasetSpecialies :one
+SELECT COUNT(*) FROM tmp_dataset_specialties;
+
+-- name: CountTmpDatasetSkills :one
+SELECT COUNT(*) FROM tmp_dataset_skills;
+
+-- name: CountTmpDatasetLocations :one
+SELECT COUNT(*) FROM tmp_dataset_locations;
+
+-- name: CountTmpPersons :one
+SELECT COUNT(*) FROM tmp_persons;
+
+-- name: CountTmpPersonSkills :one
+SELECT COUNT(*) FROM tmp_person_skills;
+
+-- name: CountTmpExperiences :one
+SELECT COUNT(*) FROM tmp_experiences;
+
+-- name: CountTmpEducations :one
+SELECT COUNT(*) FROM tmp_educations;
+
+-- name: CountTmpOrganizations :one
+SELECT COUNT(*) FROM tmp_organizations;
+
+-- name: CountTmpCompanies :one
+SELECT COUNT(*) FROM tmp_organizations WHERE organization_type = 1;
+
+-- name: CountTmpSchools :one
+SELECT COUNT(*) FROM tmp_organizations WHERE organization_type = 2;
+
+-- name: CountTmpOrganizationIndustries :one
+SELECT COUNT(*) FROM tmp_organization_industries;
+
+-- name: CountTmpOrganizationSpecialties :one
+SELECT COUNT(*) FROM tmp_organization_specialties;
+
+-- name: CountTmpOrganizationLocations :one
+SELECT COUNT(*) FROM tmp_organization_locations;
+
+-- name: SelectTestTmpExperiences :many
+SELECT e.*, t.name AS organization_name
+FROM tmp_experiences e
+INNER JOIN tmp_organizations t ON t.urn = e.organization_urn;
+
+-- name: SelectTestExperiences :many
+SELECT
+  e.id,
+  p.urn AS person_urn,
+  o.urn AS organization_urn,
+  o.name AS organization_name,
+  e.title,
+  e.location_raw,
+  e.start_year,
+  e.start_month,
+  e.is_current,
+  e.end_year,
+  e.end_month,
+  e.skills_url
+FROM experiences e
+INNER JOIN persons p ON p.id = e.person_id
+INNER JOIN organizations o ON o.id = e.organization_id;
+
+-- name: SelectTestTmpEducations :many
+SELECT e.*, t.name AS organization_name
+FROM tmp_educations e
+INNER JOIN tmp_organizations t ON t.urn = e.organization_urn;
+
+-- name: SelectTestEducations :many
+SELECT
+  e.id,
+  p.urn AS person_urn,
+  o.urn AS organization_urn,
+  o.name AS organization_name,
+  dd.name AS degree,
+  dsf.name AS study_field,
+  e.start_year,
+  e.start_month,
+  e.end_year,
+  e.end_month
+FROM educations e
+INNER JOIN persons p ON p.id = e.person_id
+INNER JOIN organizations o ON o.id = e.organization_id
+LEFT JOIN dataset_degrees dd ON dd.id = e.degree_id
+LEFT JOIN dataset_study_fields dsf ON dsf.id = e.study_field_id;
+
+-- name: SelectTestCompanies :many
+SELECT * FROM organizations WHERE organization_type = 1;
+
+-- name: SelectTestSchools :many
+SELECT * FROM organizations WHERE organization_type = 2;
+
+-- name: SelectTestTmpConnections :many
+SELECT * FROM tmp_connections;
+
+-- name: SelectTestTmpPersons :many
+SELECT * FROM tmp_persons;
+
+-- name: SelectTestPersons :many
+SELECT * FROM persons;

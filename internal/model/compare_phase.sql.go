@@ -13,9 +13,8 @@ const CountConnectionsToAdd = `-- name: CountConnectionsToAdd :one
 SELECT COUNT(t.id)
 FROM tmp_connections t
 LEFT JOIN connections c ON c.person_id = t.person_id
-  AND t.person_id IS NOT NULL
   AND c.network_id = ?
-WHERE c.id IS NULL
+WHERE c.id IS NULL AND t.person_id IS NOT NULL
 `
 
 func (q *Queries) CountConnectionsToAdd(ctx context.Context, networkID int64) (int64, error) {

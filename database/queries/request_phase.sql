@@ -20,7 +20,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS tmp_person_skills (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   person_urn TEXT NOT NULL,
   skill TEXT NOT NULL,
-  UNIQUE (person_id, skill_id)
+  UNIQUE (person_urn, skill)
 );
 
 -- name: CreateTmpExperiencesTable :exec
@@ -45,7 +45,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS tmp_educations (
   person_urn TEXT NOT NULL,
   organization_urn TEXT NOT NULL,
   degree TEXT,
-  study TEXT,
+  study_field TEXT,
   start_year INTEGER,
   start_month INTEGER,
   end_year INTEGER,

@@ -10,6 +10,72 @@ import (
 	"strings"
 )
 
+const CountCompanies = `-- name: CountCompanies :one
+SELECT COUNT(*) FROM organizations WHERE organization_type = 1
+`
+
+func (q *Queries) CountCompanies(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountCompanies)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountOrganizationIndustries = `-- name: CountOrganizationIndustries :one
+SELECT COUNT(*) FROM organization_industries
+`
+
+func (q *Queries) CountOrganizationIndustries(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountOrganizationIndustries)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountOrganizationLocations = `-- name: CountOrganizationLocations :one
+SELECT COUNT(*) FROM organization_locations
+`
+
+func (q *Queries) CountOrganizationLocations(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountOrganizationLocations)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountOrganizationSpecialties = `-- name: CountOrganizationSpecialties :one
+SELECT COUNT(*) FROM organization_specialties
+`
+
+func (q *Queries) CountOrganizationSpecialties(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountOrganizationSpecialties)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountOrganizations = `-- name: CountOrganizations :one
+SELECT COUNT(*) FROM organizations
+`
+
+func (q *Queries) CountOrganizations(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountOrganizations)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountSchools = `-- name: CountSchools :one
+SELECT COUNT(*) FROM organizations WHERE organization_type = 2
+`
+
+func (q *Queries) CountSchools(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountSchools)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const InsertOrganization = `-- name: InsertOrganization :exec
 INSERT INTO organizations
 ("name", universal_name, website, profile_url, logo_url, founded_year, founded_month, organization_type, employee_count, student_count, urn, created_at)

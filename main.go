@@ -14,9 +14,13 @@ import (
 // todo: error handling with logging and friendly user message
 
 func main() {
-	ctx := context.Background()
-	DBW, err := dbw.InitDB(ctx)
+	DBW, err := dbw.NewDBW()
 	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx := context.Background()
+	if err := dbw.InitSchema(ctx, DBW); err != nil {
 		log.Fatal(err)
 	}
 
@@ -24,17 +28,17 @@ func main() {
 		DBW: DBW,
 	}
 
-	err = APP.GetOrCreateUser(ctx, DBW)
+	err = APP.GetOrCreateUser(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = APP.PrintNetworkStats(ctx, DBW)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for {
-		err := APP.PrintNetworkStats(ctx, DBW)
-		if err != nil {
-			log.Fatal(err)
-		}
-
 		APP.PrintActions()
 
 		reader := bufio.NewReader(os.Stdin)

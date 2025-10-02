@@ -9,6 +9,195 @@ import (
 	"context"
 )
 
+const CountTmpCompanies = `-- name: CountTmpCompanies :one
+SELECT COUNT(*) FROM tmp_organizations WHERE organization_type = 1
+`
+
+func (q *Queries) CountTmpCompanies(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountTmpCompanies)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountTmpConnections = `-- name: CountTmpConnections :one
+
+SELECT COUNT(*) FROM tmp_connections
+`
+
+// testing
+func (q *Queries) CountTmpConnections(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountTmpConnections)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountTmpDatasetDegrees = `-- name: CountTmpDatasetDegrees :one
+SELECT COUNT(*) FROM tmp_dataset_degrees
+`
+
+func (q *Queries) CountTmpDatasetDegrees(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountTmpDatasetDegrees)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountTmpDatasetIndustries = `-- name: CountTmpDatasetIndustries :one
+SELECT COUNT(*) FROM tmp_dataset_industries
+`
+
+func (q *Queries) CountTmpDatasetIndustries(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountTmpDatasetIndustries)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountTmpDatasetLocations = `-- name: CountTmpDatasetLocations :one
+SELECT COUNT(*) FROM tmp_dataset_locations
+`
+
+func (q *Queries) CountTmpDatasetLocations(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountTmpDatasetLocations)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountTmpDatasetSkills = `-- name: CountTmpDatasetSkills :one
+SELECT COUNT(*) FROM tmp_dataset_skills
+`
+
+func (q *Queries) CountTmpDatasetSkills(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountTmpDatasetSkills)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountTmpDatasetSpecialies = `-- name: CountTmpDatasetSpecialies :one
+SELECT COUNT(*) FROM tmp_dataset_specialties
+`
+
+func (q *Queries) CountTmpDatasetSpecialies(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountTmpDatasetSpecialies)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountTmpDatasetStudyFields = `-- name: CountTmpDatasetStudyFields :one
+SELECT COUNT(*) FROM tmp_dataset_study_fields
+`
+
+func (q *Queries) CountTmpDatasetStudyFields(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountTmpDatasetStudyFields)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountTmpEducations = `-- name: CountTmpEducations :one
+SELECT COUNT(*) FROM tmp_educations
+`
+
+func (q *Queries) CountTmpEducations(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountTmpEducations)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountTmpExperiences = `-- name: CountTmpExperiences :one
+SELECT COUNT(*) FROM tmp_experiences
+`
+
+func (q *Queries) CountTmpExperiences(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountTmpExperiences)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountTmpOrganizationIndustries = `-- name: CountTmpOrganizationIndustries :one
+SELECT COUNT(*) FROM tmp_organization_industries
+`
+
+func (q *Queries) CountTmpOrganizationIndustries(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountTmpOrganizationIndustries)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountTmpOrganizationLocations = `-- name: CountTmpOrganizationLocations :one
+SELECT COUNT(*) FROM tmp_organization_locations
+`
+
+func (q *Queries) CountTmpOrganizationLocations(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountTmpOrganizationLocations)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountTmpOrganizationSpecialties = `-- name: CountTmpOrganizationSpecialties :one
+SELECT COUNT(*) FROM tmp_organization_specialties
+`
+
+func (q *Queries) CountTmpOrganizationSpecialties(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountTmpOrganizationSpecialties)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountTmpOrganizations = `-- name: CountTmpOrganizations :one
+SELECT COUNT(*) FROM tmp_organizations
+`
+
+func (q *Queries) CountTmpOrganizations(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountTmpOrganizations)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountTmpPersonSkills = `-- name: CountTmpPersonSkills :one
+SELECT COUNT(*) FROM tmp_person_skills
+`
+
+func (q *Queries) CountTmpPersonSkills(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountTmpPersonSkills)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountTmpPersons = `-- name: CountTmpPersons :one
+SELECT COUNT(*) FROM tmp_persons
+`
+
+func (q *Queries) CountTmpPersons(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountTmpPersons)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const CountTmpSchools = `-- name: CountTmpSchools :one
+SELECT COUNT(*) FROM tmp_organizations WHERE organization_type = 2
+`
+
+func (q *Queries) CountTmpSchools(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, CountTmpSchools)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const InsertDatasetDegreesFromTmp = `-- name: InsertDatasetDegreesFromTmp :exec
 
 INSERT INTO dataset_degrees
@@ -121,6 +310,12 @@ INNER JOIN persons p ON p.urn = t.person_urn
 INNER JOIN organizations o ON o.urn = t.organization_urn
 LEFT JOIN dataset_degrees dd ON dd.name = t.degree
 LEFT JOIN dataset_study_fields dsf ON dsf.name = t.study_field
+LEFT JOIN educations existing
+  ON existing.person_id = p.id
+  AND existing.organization_id = o.id
+  AND existing.start_year = t.start_year
+  AND existing.start_month = t.start_month
+WHERE existing.id IS NULL
 `
 
 func (q *Queries) InsertEducationsFromTmp(ctx context.Context) error {
@@ -135,6 +330,7 @@ SELECT
   p.id AS person_id,
   o.id AS organization_id,
   t.title,
+  t.location_raw,
   t.description,
   t.start_year,
   t.start_month,
@@ -145,6 +341,11 @@ SELECT
 FROM tmp_experiences t
 INNER JOIN persons p ON p.urn = t.person_urn
 INNER JOIN organizations o ON o.urn = t.organization_urn
+LEFT JOIN experiences existing
+  ON existing.person_id = p.id
+  AND existing.organization_id = o.id
+  AND existing.title = t.title
+WHERE existing.id IS NULL
 `
 
 func (q *Queries) InsertExperiencesFromTmp(ctx context.Context) error {
@@ -161,6 +362,10 @@ SELECT
 FROM tmp_organization_industries t
 INNER JOIN organizations o ON o.urn = t.organization_urn
 INNER JOIN dataset_industries d ON d.name = t.industry
+LEFT JOIN organization_industries existing
+  ON existing.organization_id = o.id
+  AND existing.industry_id = d.id
+WHERE existing.id IS NULL
 `
 
 func (q *Queries) InsertOrganizationIndustriesFromTmp(ctx context.Context) error {
@@ -178,6 +383,11 @@ SELECT
 FROM tmp_organization_locations t
 INNER JOIN organizations o ON o.urn = t.organization_urn
 INNER JOIN dataset_locations d ON d.name = t.location
+LEFT JOIN organization_locations existing
+  ON existing.organization_id = o.id
+  AND existing.location_id = d.id
+  AND existing.is_headquarters = t.is_headquarters
+WHERE existing.id IS NULL
 `
 
 func (q *Queries) InsertOrganizationLocationsFromTmp(ctx context.Context) error {
@@ -194,6 +404,10 @@ SELECT
 FROM tmp_organization_specialties t
 INNER JOIN organizations o ON o.urn = t.organization_urn
 INNER JOIN dataset_specialties d ON d.name = t.specialty
+LEFT JOIN organization_specialties existing
+  ON existing.organization_id = o.id
+  AND existing.specialty_id = d.id
+WHERE existing.id IS NULL
 `
 
 func (q *Queries) InsertOrganizationSpecialtiesFromTmp(ctx context.Context) error {
@@ -219,8 +433,8 @@ SELECT
   t.urn,
   t.created_at
 FROM tmp_organizations t
-LEFT JOIN organizations o ON o.urn = t.urn
-WHERE o.id IS NULL
+LEFT JOIN organizations existing ON existing.urn = t.urn
+WHERE existing.id IS NULL
 `
 
 // organizations
@@ -234,10 +448,14 @@ INSERT INTO person_skills
 (person_id, skill_id)
 SELECT
   p.id AS person_id,
-  d.id AS skill
+  d.id AS skill_id
 FROM tmp_person_skills t
 INNER JOIN persons p ON p.urn = t.person_urn
 INNER JOIN dataset_skills d ON d.name = t.skill
+LEFT JOIN person_skills existing
+  ON existing.person_id = p.id
+  AND existing.skill_id = d.id
+WHERE existing.id IS NULL
 `
 
 func (q *Queries) InsertPersonSkillsFromTmp(ctx context.Context) error {
@@ -262,10 +480,456 @@ SELECT
   t.created_at
 FROM tmp_persons t
 LEFT JOIN dataset_locations dl ON dl.name = t.location
+LEFT JOIN persons existing
+  ON existing.urn = t.urn
+WHERE existing.id IS NULL
 `
 
 // persons
 func (q *Queries) InsertPersonsFromTmp(ctx context.Context) error {
 	_, err := q.db.ExecContext(ctx, InsertPersonsFromTmp)
 	return err
+}
+
+const SelectTestCompanies = `-- name: SelectTestCompanies :many
+SELECT id, name, universal_name, website, profile_url, logo_url, founded_year, founded_month, organization_type, employee_count, student_count, urn, created_at, updated_at FROM organizations WHERE organization_type = 1
+`
+
+func (q *Queries) SelectTestCompanies(ctx context.Context) ([]Organizations, error) {
+	rows, err := q.db.QueryContext(ctx, SelectTestCompanies)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Organizations{}
+	for rows.Next() {
+		var i Organizations
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.UniversalName,
+			&i.Website,
+			&i.ProfileUrl,
+			&i.LogoUrl,
+			&i.FoundedYear,
+			&i.FoundedMonth,
+			&i.OrganizationType,
+			&i.EmployeeCount,
+			&i.StudentCount,
+			&i.Urn,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const SelectTestEducations = `-- name: SelectTestEducations :many
+SELECT
+  e.id,
+  p.urn AS person_urn,
+  o.urn AS organization_urn,
+  o.name AS organization_name,
+  dd.name AS degree,
+  dsf.name AS study_field,
+  e.start_year,
+  e.start_month,
+  e.end_year,
+  e.end_month
+FROM educations e
+INNER JOIN persons p ON p.id = e.person_id
+INNER JOIN organizations o ON o.id = e.organization_id
+LEFT JOIN dataset_degrees dd ON dd.id = e.degree_id
+LEFT JOIN dataset_study_fields dsf ON dsf.id = e.study_field_id
+`
+
+type SelectTestEducationsRow struct {
+	ID               int64   `db:"id"`
+	PersonUrn        string  `db:"person_urn"`
+	OrganizationUrn  string  `db:"organization_urn"`
+	OrganizationName string  `db:"organization_name"`
+	Degree           *string `db:"degree"`
+	StudyField       *string `db:"study_field"`
+	StartYear        *int64  `db:"start_year"`
+	StartMonth       *int64  `db:"start_month"`
+	EndYear          *int64  `db:"end_year"`
+	EndMonth         *int64  `db:"end_month"`
+}
+
+func (q *Queries) SelectTestEducations(ctx context.Context) ([]SelectTestEducationsRow, error) {
+	rows, err := q.db.QueryContext(ctx, SelectTestEducations)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []SelectTestEducationsRow{}
+	for rows.Next() {
+		var i SelectTestEducationsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.PersonUrn,
+			&i.OrganizationUrn,
+			&i.OrganizationName,
+			&i.Degree,
+			&i.StudyField,
+			&i.StartYear,
+			&i.StartMonth,
+			&i.EndYear,
+			&i.EndMonth,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const SelectTestExperiences = `-- name: SelectTestExperiences :many
+SELECT
+  e.id,
+  p.urn AS person_urn,
+  o.urn AS organization_urn,
+  o.name AS organization_name,
+  e.title,
+  e.location_raw,
+  e.start_year,
+  e.start_month,
+  e.is_current,
+  e.end_year,
+  e.end_month,
+  e.skills_url
+FROM experiences e
+INNER JOIN persons p ON p.id = e.person_id
+INNER JOIN organizations o ON o.id = e.organization_id
+`
+
+type SelectTestExperiencesRow struct {
+	ID               int64   `db:"id"`
+	PersonUrn        string  `db:"person_urn"`
+	OrganizationUrn  string  `db:"organization_urn"`
+	OrganizationName string  `db:"organization_name"`
+	Title            string  `db:"title"`
+	LocationRaw      *string `db:"location_raw"`
+	StartYear        *int64  `db:"start_year"`
+	StartMonth       *int64  `db:"start_month"`
+	IsCurrent        int64   `db:"is_current"`
+	EndYear          *int64  `db:"end_year"`
+	EndMonth         *int64  `db:"end_month"`
+	SkillsUrl        *string `db:"skills_url"`
+}
+
+func (q *Queries) SelectTestExperiences(ctx context.Context) ([]SelectTestExperiencesRow, error) {
+	rows, err := q.db.QueryContext(ctx, SelectTestExperiences)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []SelectTestExperiencesRow{}
+	for rows.Next() {
+		var i SelectTestExperiencesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.PersonUrn,
+			&i.OrganizationUrn,
+			&i.OrganizationName,
+			&i.Title,
+			&i.LocationRaw,
+			&i.StartYear,
+			&i.StartMonth,
+			&i.IsCurrent,
+			&i.EndYear,
+			&i.EndMonth,
+			&i.SkillsUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const SelectTestPersons = `-- name: SelectTestPersons :many
+SELECT id, first_name, last_name, headline, profile_url, public_identifier, profile_picture_url, about, location_id, urn, created_at, updated_at FROM persons
+`
+
+func (q *Queries) SelectTestPersons(ctx context.Context) ([]Persons, error) {
+	rows, err := q.db.QueryContext(ctx, SelectTestPersons)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Persons{}
+	for rows.Next() {
+		var i Persons
+		if err := rows.Scan(
+			&i.ID,
+			&i.FirstName,
+			&i.LastName,
+			&i.Headline,
+			&i.ProfileUrl,
+			&i.PublicIdentifier,
+			&i.ProfilePictureUrl,
+			&i.About,
+			&i.LocationID,
+			&i.Urn,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const SelectTestSchools = `-- name: SelectTestSchools :many
+SELECT id, name, universal_name, website, profile_url, logo_url, founded_year, founded_month, organization_type, employee_count, student_count, urn, created_at, updated_at FROM organizations WHERE organization_type = 2
+`
+
+func (q *Queries) SelectTestSchools(ctx context.Context) ([]Organizations, error) {
+	rows, err := q.db.QueryContext(ctx, SelectTestSchools)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Organizations{}
+	for rows.Next() {
+		var i Organizations
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.UniversalName,
+			&i.Website,
+			&i.ProfileUrl,
+			&i.LogoUrl,
+			&i.FoundedYear,
+			&i.FoundedMonth,
+			&i.OrganizationType,
+			&i.EmployeeCount,
+			&i.StudentCount,
+			&i.Urn,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const SelectTestTmpConnections = `-- name: SelectTestTmpConnections :many
+SELECT id, network_id, profile_url, person_id FROM tmp_connections
+`
+
+func (q *Queries) SelectTestTmpConnections(ctx context.Context) ([]TmpConnections, error) {
+	rows, err := q.db.QueryContext(ctx, SelectTestTmpConnections)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []TmpConnections{}
+	for rows.Next() {
+		var i TmpConnections
+		if err := rows.Scan(
+			&i.ID,
+			&i.NetworkID,
+			&i.ProfileUrl,
+			&i.PersonID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const SelectTestTmpEducations = `-- name: SelectTestTmpEducations :many
+SELECT e.id, e.person_urn, e.organization_urn, e.degree, e.study_field, e.start_year, e.start_month, e.end_year, e.end_month, t.name AS organization_name
+FROM tmp_educations e
+INNER JOIN tmp_organizations t ON t.urn = e.organization_urn
+`
+
+type SelectTestTmpEducationsRow struct {
+	ID               int64   `db:"id"`
+	PersonUrn        string  `db:"person_urn"`
+	OrganizationUrn  string  `db:"organization_urn"`
+	Degree           *string `db:"degree"`
+	StudyField       *string `db:"study_field"`
+	StartYear        *int64  `db:"start_year"`
+	StartMonth       *int64  `db:"start_month"`
+	EndYear          *int64  `db:"end_year"`
+	EndMonth         *int64  `db:"end_month"`
+	OrganizationName string  `db:"organization_name"`
+}
+
+func (q *Queries) SelectTestTmpEducations(ctx context.Context) ([]SelectTestTmpEducationsRow, error) {
+	rows, err := q.db.QueryContext(ctx, SelectTestTmpEducations)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []SelectTestTmpEducationsRow{}
+	for rows.Next() {
+		var i SelectTestTmpEducationsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.PersonUrn,
+			&i.OrganizationUrn,
+			&i.Degree,
+			&i.StudyField,
+			&i.StartYear,
+			&i.StartMonth,
+			&i.EndYear,
+			&i.EndMonth,
+			&i.OrganizationName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const SelectTestTmpExperiences = `-- name: SelectTestTmpExperiences :many
+SELECT e.id, e.person_urn, e.organization_urn, e.title, e.location_raw, e.description, e.start_year, e.start_month, e.is_current, e.end_year, e.end_month, e.skills_url, t.name AS organization_name
+FROM tmp_experiences e
+INNER JOIN tmp_organizations t ON t.urn = e.organization_urn
+`
+
+type SelectTestTmpExperiencesRow struct {
+	ID               int64   `db:"id"`
+	PersonUrn        string  `db:"person_urn"`
+	OrganizationUrn  string  `db:"organization_urn"`
+	Title            string  `db:"title"`
+	LocationRaw      *string `db:"location_raw"`
+	Description      *string `db:"description"`
+	StartYear        *int64  `db:"start_year"`
+	StartMonth       *int64  `db:"start_month"`
+	IsCurrent        int64   `db:"is_current"`
+	EndYear          *int64  `db:"end_year"`
+	EndMonth         *int64  `db:"end_month"`
+	SkillsUrl        *string `db:"skills_url"`
+	OrganizationName string  `db:"organization_name"`
+}
+
+func (q *Queries) SelectTestTmpExperiences(ctx context.Context) ([]SelectTestTmpExperiencesRow, error) {
+	rows, err := q.db.QueryContext(ctx, SelectTestTmpExperiences)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []SelectTestTmpExperiencesRow{}
+	for rows.Next() {
+		var i SelectTestTmpExperiencesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.PersonUrn,
+			&i.OrganizationUrn,
+			&i.Title,
+			&i.LocationRaw,
+			&i.Description,
+			&i.StartYear,
+			&i.StartMonth,
+			&i.IsCurrent,
+			&i.EndYear,
+			&i.EndMonth,
+			&i.SkillsUrl,
+			&i.OrganizationName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const SelectTestTmpPersons = `-- name: SelectTestTmpPersons :many
+SELECT id, first_name, last_name, headline, profile_url, public_identifier, profile_picture_url, about, location, urn, created_at FROM tmp_persons
+`
+
+func (q *Queries) SelectTestTmpPersons(ctx context.Context) ([]TmpPersons, error) {
+	rows, err := q.db.QueryContext(ctx, SelectTestTmpPersons)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []TmpPersons{}
+	for rows.Next() {
+		var i TmpPersons
+		if err := rows.Scan(
+			&i.ID,
+			&i.FirstName,
+			&i.LastName,
+			&i.Headline,
+			&i.ProfileUrl,
+			&i.PublicIdentifier,
+			&i.ProfilePictureUrl,
+			&i.About,
+			&i.Location,
+			&i.Urn,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

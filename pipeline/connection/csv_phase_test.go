@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/c-malecki/go-utils/database"
@@ -16,32 +17,30 @@ import (
 	"github.com/c-malecki/lina/pipeline"
 )
 
-const bom = "\uFEFF"
-
-var csvheaders = [...]string{"first name", "last name", "url", "email address", "company", "position", "connected on"}
-
-type CsvPhase struct {
+type TestCsvPhase struct {
 	startTime time.Time
 	endTime   time.Time
 	pipeline  *ConnectionPipeline
 	next      pipeline.Phase
 	csv       *os.File
+	test      *testing.T
 }
 
-func (p *CsvPhase) Ended(err error) {
+func (p *TestCsvPhase) Ended(err error) {
 	p.endTime = time.Now()
 	if err != nil {
 		p.pipeline.End(pipeline.FAILED)
 	}
 }
 
-func (p *CsvPhase) Next() pipeline.Phase {
+func (p *TestCsvPhase) Next() pipeline.Phase {
 	return p.next
 }
 
-func (p *CsvPhase) Start(ctx context.Context) {
+func (p *TestCsvPhase) Start(ctx context.Context) {
 	p.startTime = time.Now()
 	p.pipeline.SetCurrent(p)
+	fmt.Printf("\n=== csv phase ===\n")
 
 	reader := csv.NewReader(p.csv)
 	reader.FieldsPerRecord = -1
@@ -53,10 +52,14 @@ func (p *CsvPhase) Start(ctx context.Context) {
 		line, err := reader.Read()
 
 		if err == io.EOF {
-			p.Ended(errors.New("csv does not match the expected format"))
+			err := errors.New("csv does not match the expected format")
+			p.Ended(err)
+			p.test.Fatal(err)
 			return
 		} else if err != nil {
-			p.Ended(fmt.Errorf("error: read csv line %v", err))
+			err := fmt.Errorf("error: read csv line %v", err)
+			p.Ended(err)
+			p.test.Fatal(err)
 			return
 		}
 
@@ -74,14 +77,18 @@ func (p *CsvPhase) Start(ctx context.Context) {
 	}
 
 	if len(headers) != len(csvheaders) {
-		p.Ended(fmt.Errorf("csv headers length (%v) does not match expected length (%v)", len(headers), len(csvheaders)))
+		err := fmt.Errorf("csv headers length (%v) does not match expected length (%v)", len(headers), len(csvheaders))
+		p.Ended(err)
+		p.test.Fatal(err)
 		return
 	}
 
 	for i, h := range headers {
 		isSame := strings.EqualFold(h, csvheaders[i])
 		if !isSame {
-			p.Ended(fmt.Errorf("parsed header \"%s\" does not match expected header \"%s\"", h, csvheaders[i]))
+			err := fmt.Errorf("parsed header \"%s\" does not match expected header \"%s\"", h, csvheaders[i])
+			p.Ended(err)
+			p.test.Fatal(err)
 			return
 		}
 	}
@@ -91,7 +98,7 @@ func (p *CsvPhase) Start(ctx context.Context) {
 	validCt := 0
 	invalidCt := 0
 
-	fmt.Println("\nParsing CSV...")
+	fmt.Println("\nparsing csv...")
 
 	for {
 		line, err := reader.Read()
@@ -100,6 +107,7 @@ func (p *CsvPhase) Start(ctx context.Context) {
 			break
 		} else if err != nil {
 			p.Ended(err)
+			p.test.Fatal(err)
 			return
 		}
 
@@ -123,11 +131,12 @@ func (p *CsvPhase) Start(ctx context.Context) {
 		})
 	}
 
-	fmt.Printf("Valid CSV lines: %d\n", validCt)
-	fmt.Printf("Invalid CSV lines: %d", invalidCt)
+	fmt.Printf("valid rows: %d\n", validCt)
+	fmt.Printf("invalid rows: %d", invalidCt)
 
 	if err := p.pipeline.dbw.SQLC.CreateTmpConnectionsTable(ctx); err != nil {
 		p.Ended(err)
+		p.test.Fatal(err)
 		return
 	}
 
@@ -142,6 +151,7 @@ func (p *CsvPhase) Start(ctx context.Context) {
 		},
 	}); err != nil {
 		p.Ended(err)
+		p.test.Fatal(err)
 		return
 	}
 
